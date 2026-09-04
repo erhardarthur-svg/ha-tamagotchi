@@ -8,47 +8,84 @@
 </head>
 <body>
   <main class="wrap">
-    <section id="scene" class="scene sunny day" aria-label="Scène Tamagotchi météo">
-      <div class="sky">
+    <section id="scene" class="scene sunny day" aria-label="Compagnon maison météo">
+      <div class="room-glow"></div>
+
+      <div class="window-scene">
+        <div class="outside-sky"></div>
         <div class="sun"></div>
         <div class="moon"></div>
+        <div class="stars"></div>
         <div class="cloud cloud-a"></div>
         <div class="cloud cloud-b"></div>
-        <div class="rain" aria-hidden="true"></div>
-        <div class="stars" aria-hidden="true"></div>
+        <div class="rain"></div>
+        <div class="lightning"></div>
+        <div class="hills"></div>
       </div>
 
-      <div class="ground"></div>
+      <div class="window-frame">
+        <div class="bar vertical"></div>
+        <div class="bar horizontal"></div>
+      </div>
 
-      <div class="house">
-        <div class="roof"></div>
-        <div class="wall"></div>
-        <div class="window"></div>
-        <div class="door"></div>
+      <div class="room">
+        <div class="wall-shadow"></div>
+        <div class="shelf">
+          <span class="book b1"></span>
+          <span class="book b2"></span>
+          <span class="book b3"></span>
+          <span class="plant-pot"></span>
+          <span class="plant-leaf l1"></span>
+          <span class="plant-leaf l2"></span>
+          <span class="plant-leaf l3"></span>
+        </div>
+
+        <div class="lamp">
+          <div class="lamp-shade"></div>
+          <div class="lamp-neck"></div>
+          <div class="lamp-base"></div>
+        </div>
+
+        <div class="rug"></div>
+        <div class="bed">
+          <div class="bed-frame"></div>
+          <div class="mattress"></div>
+          <div class="pillow"></div>
+          <div class="blanket"></div>
+        </div>
       </div>
 
       <div id="pet" class="pet awake">
+        <div class="pet-shadow"></div>
         <div class="ear ear-l"></div>
         <div class="ear ear-r"></div>
+        <div class="body"></div>
         <div class="head">
           <div class="eye eye-l"></div>
           <div class="eye eye-r"></div>
+          <div class="blush blush-l"></div>
+          <div class="blush blush-r"></div>
           <div class="mouth"></div>
         </div>
-        <div class="body"></div>
+        <div class="arm arm-l"></div>
+        <div class="arm arm-r"></div>
         <div class="zzz">Z</div>
+        <div class="thought" id="thoughtBubble">☀</div>
       </div>
 
       <div class="hud">
-        <div>
+        <div class="status">
           <strong id="periodLabel">Journée</strong>
           <span id="weatherLabel">Ensoleillé</span>
         </div>
         <div class="time" id="clock">12:00</div>
       </div>
+
+      <div class="caption" id="caption">Belle journée à la maison.</div>
     </section>
 
     <section class="tester" aria-label="Mode test">
+      <div class="tester-title">Mode test</div>
       <div class="tester-row">
         <button data-hour="8">Matin</button>
         <button data-hour="14">Jour</button>
