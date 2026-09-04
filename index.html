@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HA Tamagotchi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <section id="scene" class="scene sunny day" aria-label="Scène Tamagotchi météo">
+      <div class="sky">
+        <div class="sun"></div>
+        <div class="moon"></div>
+        <div class="cloud cloud-a"></div>
+        <div class="cloud cloud-b"></div>
+        <div class="rain" aria-hidden="true"></div>
+        <div class="stars" aria-hidden="true"></div>
+      </div>
+
+      <div class="ground"></div>
+
+      <div class="house">
+        <div class="roof"></div>
+        <div class="wall"></div>
+        <div class="window"></div>
+        <div class="door"></div>
+      </div>
+
+      <div id="pet" class="pet awake">
+        <div class="ear ear-l"></div>
+        <div class="ear ear-r"></div>
+        <div class="head">
+          <div class="eye eye-l"></div>
+          <div class="eye eye-r"></div>
+          <div class="mouth"></div>
+        </div>
+        <div class="body"></div>
+        <div class="zzz">Z</div>
+      </div>
+
+      <div class="hud">
+        <div>
+          <strong id="periodLabel">Journée</strong>
+          <span id="weatherLabel">Ensoleillé</span>
+        </div>
+        <div class="time" id="clock">12:00</div>
+      </div>
+    </section>
+
+    <section class="tester" aria-label="Mode test">
+      <div class="tester-row">
+        <button data-hour="8">Matin</button>
+        <button data-hour="14">Jour</button>
+        <button data-hour="20">Soir</button>
+        <button data-hour="1">Nuit</button>
+      </div>
+      <div class="tester-row">
+        <button data-weather="sunny">Soleil</button>
+        <button data-weather="cloudy">Nuageux</button>
+        <button data-weather="rainy">Pluie</button>
+        <button data-weather="stormy">Orage</button>
+      </div>
+      <div class="tester-row">
+        <button id="autoBtn">Auto</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
