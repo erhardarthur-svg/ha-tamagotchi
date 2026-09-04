@@ -2,104 +2,52 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HA Tamagotchi</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>HA Village</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="wrap">
-    <section id="scene" class="scene sunny day" aria-label="Compagnon maison météo">
-      <div class="room-glow"></div>
+  <main class="app-shell">
+    <section class="village-card">
+      <canvas id="village" width="960" height="540" aria-label="Petit village vivant vu du dessus"></canvas>
 
-      <div class="window-scene">
-        <div class="outside-sky"></div>
-        <div class="sun"></div>
-        <div class="moon"></div>
-        <div class="stars"></div>
-        <div class="cloud cloud-a"></div>
-        <div class="cloud cloud-b"></div>
-        <div class="rain"></div>
-        <div class="lightning"></div>
-        <div class="hills"></div>
-      </div>
-
-      <div class="window-frame">
-        <div class="bar vertical"></div>
-        <div class="bar horizontal"></div>
-      </div>
-
-      <div class="room">
-        <div class="wall-shadow"></div>
-        <div class="shelf">
-          <span class="book b1"></span>
-          <span class="book b2"></span>
-          <span class="book b3"></span>
-          <span class="plant-pot"></span>
-          <span class="plant-leaf l1"></span>
-          <span class="plant-leaf l2"></span>
-          <span class="plant-leaf l3"></span>
-        </div>
-
-        <div class="lamp">
-          <div class="lamp-shade"></div>
-          <div class="lamp-neck"></div>
-          <div class="lamp-base"></div>
-        </div>
-
-        <div class="rug"></div>
-        <div class="bed">
-          <div class="bed-frame"></div>
-          <div class="mattress"></div>
-          <div class="pillow"></div>
-          <div class="blanket"></div>
-        </div>
-      </div>
-
-      <div id="pet" class="pet awake">
-        <div class="pet-shadow"></div>
-        <div class="ear ear-l"></div>
-        <div class="ear ear-r"></div>
-        <div class="body"></div>
-        <div class="head">
-          <div class="eye eye-l"></div>
-          <div class="eye eye-r"></div>
-          <div class="blush blush-l"></div>
-          <div class="blush blush-r"></div>
-          <div class="mouth"></div>
-        </div>
-        <div class="arm arm-l"></div>
-        <div class="arm arm-r"></div>
-        <div class="zzz">Z</div>
-        <div class="thought" id="thoughtBubble">☀</div>
-      </div>
-
-      <div class="hud">
-        <div class="status">
-          <strong id="periodLabel">Journée</strong>
+      <div class="topbar">
+        <div class="status-block">
+          <strong id="periodLabel">Nuit</strong>
           <span id="weatherLabel">Ensoleillé</span>
         </div>
-        <div class="time" id="clock">12:00</div>
+        <div class="clock-block">
+          <strong id="clock">00:00</strong>
+          <span id="dateLabel">--</span>
+        </div>
       </div>
 
-      <div class="caption" id="caption">Belle journée à la maison.</div>
+      <div class="event-feed" id="eventFeed">
+        <span class="event-dot"></span>
+        <span id="eventText">Le village s’éveille...</span>
+      </div>
     </section>
 
-    <section class="tester" aria-label="Mode test">
-      <div class="tester-title">Mode test</div>
-      <div class="tester-row">
-        <button data-hour="8">Matin</button>
-        <button data-hour="14">Jour</button>
-        <button data-hour="20">Soir</button>
+    <section class="tester" aria-label="Commandes de test">
+      <div class="tester-group">
+        <span class="tester-label">Heure</span>
+        <button data-hour="7">Matin</button>
+        <button data-hour="13">Jour</button>
+        <button data-hour="19">Soir</button>
         <button data-hour="1">Nuit</button>
       </div>
-      <div class="tester-row">
+      <div class="tester-group">
+        <span class="tester-label">Météo</span>
         <button data-weather="sunny">Soleil</button>
         <button data-weather="cloudy">Nuageux</button>
         <button data-weather="rainy">Pluie</button>
         <button data-weather="stormy">Orage</button>
+        <button data-weather="snowy">Neige</button>
+        <button data-weather="foggy">Brouillard</button>
       </div>
-      <div class="tester-row">
-        <button id="autoBtn">Auto</button>
+      <div class="tester-group tester-actions">
+        <button id="autoBtn" class="primary">Auto</button>
+        <button id="chaosBtn">Événement</button>
       </div>
     </section>
   </main>
