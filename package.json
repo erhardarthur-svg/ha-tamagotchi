@@ -1,0 +1,8 @@
+{
+  "name": "ha-tamagotchi",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Village vivant pour Home Assistant, sans dépendance ni compilation.",
+  "scripts": { "test": "node --test tests/*.test.js" }
+}
