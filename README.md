@@ -1,6 +1,8 @@
-# HA Village — V4
+# HA Village — V4.1
 
-Un diorama de village animé, destiné à une tuile Home Assistant. Le décor original est une illustration pixel-art vue en plongée, avec une place, une fontaine, quatre bâtiments principaux, un abri, un potager, un pont et une rivière. Les habitants, animaux, éclairages, fumées, ondulations et effets météo sont animés séparément en Canvas 2D.
+La place accueille désormais une grande horloge de pierre à la place de la fontaine : aiguilles réelles, heure 24 h et date inscrites dans le cadran, éclairage doux la nuit. Elle suit la même horloge que Home Assistant ou les forçages Debug. Les habitants contournent sa nouvelle emprise. Les badges supérieurs d’heure, de période et de météo ont été supprimés ; la météo s’exprime uniquement par ses effets visuels. Son origine simulée reste précisée dans le Debug et dans le texte accessible aux lecteurs d’écran.
+
+Un diorama de village animé, destiné à une tuile Home Assistant. Le décor original est une illustration pixel-art vue en plongée, avec une place, quatre bâtiments principaux, un abri, un potager, un pont et une rivière. L’horloge fonctionnelle, les habitants, animaux, éclairages, fumées, ondulations et effets météo sont dessinés séparément en Canvas 2D.
 
 ## Utilisation
 
@@ -9,7 +11,7 @@ Le projet est statique : aucun build, aucune dépendance à installer, aucune cl
 - Vue normale : `index.html`. L’heure et la date suivent le fuseau du téléphone.
 - Mode test : `index.html?debug=1`, puis le petit bouton **Debug**. Les quatre périodes et les six météos sont indépendantes. **Auto** efface les deux forçages et reprend les données automatiques, y compris celles de Home Assistant si elles ont été fournies.
 - Pleine surface de tuile : détection automatique d’une iframe, ou `?embed=1`.
-- Sans Home Assistant, la météo est **simulée**, explicitement signalée dans l’interface. Elle est stable pendant trois heures et tient compte du mois. Ce n’est pas la météo réelle de Bayonne. Aucun service extérieur, géolocalisation ou appel réseau météo n’est utilisé.
+- Sans Home Assistant, la météo est **simulée**, précisée dans le Debug et la description accessible. Elle est stable pendant trois heures et tient compte du mois. Ce n’est pas la météo réelle de Bayonne. Aucun service extérieur, géolocalisation ou appel réseau météo n’est utilisé.
 - Les forçages ne sont pas mémorisés. Un rechargement repart en Auto.
 
 Pour un essai local, servir le dossier en HTTP, par exemple avec Python déjà installé :
@@ -22,7 +24,7 @@ Puis ouvrir `http://localhost:8080/`. Les modules ES nécessitent un serveur HTT
 
 ## Dans Home Assistant
 
-Pour une installation entièrement locale, copier `index.html`, `style.css`, les huit fichiers `.js` et le dossier `assets` dans `/config/www/ha-tamagotchi/`, puis utiliser l’adresse `/local/ha-tamagotchi/index.html` dans une carte **Page web**. Le dossier doit être conservé au complet. Le rendu ne requiert aucun cloud après cette copie.
+Pour une installation entièrement locale, copier `index.html`, `style.css`, tous les fichiers `.js` à la racine et le dossier `assets` dans `/config/www/ha-tamagotchi/`, puis utiliser l’adresse `/local/ha-tamagotchi/index.html` dans une carte **Page web**. Le dossier doit être conservé au complet. Le rendu ne requiert aucun cloud après cette copie.
 
 L’éditeur visuel de la carte permet de renseigner l’URL et la proportion. Exemple de configuration équivalente :
 
@@ -63,7 +65,7 @@ frame.contentWindow.postMessage({
 
 En hébergement local de même origine, aucune option supplémentaire n’est requise. Si le village est sur GitHub Pages et HA sur un autre domaine, ajouter **l’origine exacte de HA** à l’URL du village, par exemple `?ha_origin=https%3A%2F%2Fha.example`. Les messages ne sont acceptés que du parent direct et de cette origine. Ne jamais passer de jeton dans l’URL. Cet exemple décrit le contrat d’un futur adaptateur ; il n’ajoute pas une carte personnalisée HA.
 
-L’adaptateur devra envoyer la météo au chargement et périodiquement, par exemple toutes les cinq minutes. Après **30 minutes sans réception d’un état météo**, la scène revient à la météo simulée et réaffiche son indication. `unknown`, `unavailable` ou `null` provoquent ce repli immédiatement. Un `window.haVillage.reset()` complet revient à l’heure du téléphone, efface les données externes et les forçages.
+L’adaptateur devra envoyer la météo au chargement et périodiquement, par exemple toutes les cinq minutes. Après **30 minutes sans réception d’un état météo**, la scène revient à la météo simulée et actualise sa description accessible. `unknown`, `unavailable` ou `null` provoquent ce repli immédiatement. Un `window.haVillage.reset()` complet revient à l’heure du téléphone, efface les données externes et les forçages.
 
 | Home Assistant | Scène |
 | --- | --- |
@@ -83,6 +85,7 @@ Les conditions moins courantes sont regroupées dans les six ambiances demandée
 | `index.html` / `style.css` | Surcouche, responsive, commandes discrètes |
 | `main.js` | Initialisation, boucle 30 i/s, cycle de vie, repli météo |
 | `scene.js` | Décor en cache, lumière, eau, fenêtres, lanternes, fumée |
+| `plaza-clock.js` | Horloge de pierre intégrée à la place, aiguilles, heure et date |
 | `world.js` | Coordonnées du décor, chemins, points d’intérêt |
 | `entities.js` | Habitants, chien, chat, poules, trajets et événements |
 | `time.js` | Horloge locale ou externe, fuseau, quatre périodes |
@@ -95,11 +98,11 @@ Pour modifier le plan du village, mettre à jour le décor et ses ancrages dans 
 
 ## Animations et performance
 
-- Six habitants suivent un graphe de chemins. Ils contournent la fontaine et traversent la rivière uniquement par le pont. Un changement d’heure ou de météo termine d’abord le segment en cours, sans téléportation.
+- Six habitants suivent un graphe de chemins. Ils contournent l’horloge et traversent la rivière uniquement par le pont. Un changement d’heure ou de météo termine d’abord le segment en cours, sans téléportation.
 - La nuit, cinq habitants rentrent chez eux ; un veilleur continue sa ronde avec une lanterne. Le soir et sous la pluie, l’activité ralentit. Les orages poussent les habitants à se mettre à l’abri.
-- Un chien et un chat suivent les allées ; trois poules picorent et se déplacent près du potager. Événements espacés, vitesses bornées, petits groupes près de la fontaine.
+- Un chien et un chat suivent les allées ; trois poules picorent et se déplacent près du potager. Événements espacés, vitesses bornées, petits groupes près de l’horloge.
 - Quatre périodes : matin 6–10 h, jour 10–18 h, soir 18–22 h, nuit 22–6 h. Transitions fondues de 1,4 seconde. Ce sont des horaires fixes, pas un calcul astronomique du soleil.
-- Une seule image locale et moins de 60 Ko de code source pour le rendu. Terrain précomposé lors des changements d’ambiance ; maximum de 135 particules et de 1,8 million de pixels de rendu, DPR plafonné à 1,5.
+- Une seule image locale, sans dépendances de production. Terrain et pierre de l’horloge précomposés lors des changements d’ambiance ; maximum de 135 particules et de 1,8 million de pixels de rendu, DPR plafonné à 1,5.
 - Le dessin est limité à 30 images/s ; aucun calcul météo réseau. Mise en pause quand l’onglet est masqué ou la tuile hors écran. Reprise avec un pas de simulation borné.
 - La préférence système **Réduire les animations** fige les déplacements, flocons, fumée et eau, supprime les éclairs et conserve l’actualisation de l’horloge et de l’ambiance.
 - Texte français, commandes tactiles de 44 px, états `aria-pressed`, fermeture par Échap, information météo visible sans interpréter le dessin.

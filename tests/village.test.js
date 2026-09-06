@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { VillageClock, periodForHour } from '../time.js';
 import { VillageWeather, WeatherEffects, simulatedWeather, normalizeWeather } from '../weather.js';
-import { NODES, GRAPH, SOLID_AREAS, FOUNTAIN, findRoute } from '../world.js';
+import { NODES, GRAPH, SOLID_AREAS, PLAZA_CLOCK, findRoute } from '../world.js';
+import { handAngles } from '../plaza-clock.js';
 import { VillageLife } from '../entities.js';
 import { sanitizeState, acceptsMessage } from '../bridge.js';
 
@@ -40,7 +41,7 @@ test('simulation is deterministic, seasonal and constant within the same weather
   for (const invalid of ['__proto__', 'constructor', 'unavailable', '', null, {}, 1]) assert.equal(normalizeWeather(invalid), null);
 });
 
-test('all destinations connect, and every route avoids buildings, fountain and unbridged river', () => {
+test('all destinations connect, and every route avoids buildings, the large clock and unbridged river', () => {
   for (const from of Object.keys(NODES)) for (const to of Object.keys(NODES)) {
     if (from !== to) assert.equal(findRoute(from, to).at(-1), to, `${from} -> ${to}`);
   }
@@ -49,7 +50,7 @@ test('all destinations connect, and every route avoids buildings, fountain and u
     for (let t = 0; t <= 1; t += .02) {
       const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t;
       for (const rect of SOLID_AREAS) assert.ok(!(x > rect.x && x < rect.x + rect.w && y > rect.y && y < rect.y + rect.h), `${from} -> ${to} enters building at ${x},${y}`);
-      assert.ok(Math.hypot(x - FOUNTAIN.x, y - FOUNTAIN.y) > 68, `${from} -> ${to} enters fountain`);
+      assert.ok(Math.hypot(x - PLAZA_CLOCK.x, y - PLAZA_CLOCK.y) > PLAZA_CLOCK.radius + 5, `${from} -> ${to} enters clock`);
       if (x > 1190) assert.ok(Math.abs(y - 466) < 1, 'river crossed outside the bridge');
     }
   }
@@ -116,7 +117,15 @@ test('entrypoint is self-contained; debug is hidden by default and artwork is un
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   assert.ok(/id="debugToggle"[^>]*hidden/.test(html));
   assert.ok(/id="debugPanel"[^>]*hidden/.test(html));
+  assert.equal(/class="topbar"|id="weatherLabel"|id="clock"/.test(html), false);
   assert.equal(/https?:\/\//.test(html), false);
   for (const match of html.matchAll(/(?:src|href)="([^"?]+)(?:\?[^"]*)?"/g)) await stat(new URL(`../${match[1]}`, import.meta.url));
   assert.ok((await stat(new URL('../assets/village.webp', import.meta.url))).size < 1000000);
+});
+
+test('plaza clock hands use the real minute including the hour hand offset', () => {
+  assert.deepEqual(handAngles(0, 0), { hour: 0, minute: 0 });
+  assert.ok(Math.abs(handAngles(15, 30).minute - Math.PI) < 1e-12);
+  assert.equal(handAngles(15, 30).hour, 3.5 * Math.PI / 6);
+  assert.deepEqual(handAngles(12, 0), handAngles(0, 0));
 });

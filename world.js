@@ -1,6 +1,6 @@
 /** All coordinates refer to the 1536 × 1024 background. Keep art and map together. */
 export const WORLD = Object.freeze({ width: 1536, height: 1024 });
-export const FOUNTAIN = Object.freeze({ x: 711, y: 443, radius: 40 });
+export const PLAZA_CLOCK = Object.freeze({ x: 711, y: 443, radius: 135 });
 export const CHIMNEYS = [[462, 103], [908, 143], [394, 548], [944, 613]];
 export const LANTERNS = [
   { x: 488, y: 364, ground: 400 }, { x: 928, y: 509, ground: 539 },
@@ -17,12 +17,12 @@ export const WINDOWS = [
 ];
 
 // A small explicit navigation graph is cheaper and more reliable than free roaming.
-// The fountain is surrounded by a ring. The only river crossing is the bridge.
+// The clock is surrounded by a ring. The only river crossing is the bridge.
 export const NODES = Object.freeze({
   westGate: [12, 467], westPath: [226, 465], westLane: [431, 462],
-  west: [561, 448], northwest: [594, 354], north: [703, 335],
-  northeast: [811, 350], east: [833, 447], southeast: [793, 527],
-  south: [706, 564], southwest: [595, 536],
+  west: [561, 448], northwest: [577, 345], north: [703, 292],
+  northeast: [845, 329], east: [873, 447], southeast: [833, 556],
+  south: [706, 610], southwest: [585, 558],
   northPath: [683, 231], northGate: [676, 16],
   innLane: [488, 349], innStep: [407, 334], inn: [407, 312],
   cottageStep: [875, 324], cottage: [875, 291],
@@ -31,7 +31,7 @@ export const NODES = Object.freeze({
   workshopPath: [785, 774], workshopStep: [859, 790], workshop: [881, 763],
   eastLane: [997, 465], bridgeWest: [1185, 466], bridgeEast: [1394, 466], eastGate: [1521, 466],
   gardenLane: [570, 827], garden: [485, 867],
-  meetingA: [719, 355], meetingB: [742, 357], meetingC: [760, 367],
+  meetingA: [722, 282], meetingB: [746, 286], meetingC: [768, 290],
 });
 const EDGES = [
   ['westGate', 'westPath'], ['westPath', 'westLane'], ['westLane', 'west'],

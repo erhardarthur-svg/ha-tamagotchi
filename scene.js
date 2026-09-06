@@ -1,6 +1,7 @@
-import { WORLD, FOUNTAIN, CHIMNEYS, LANTERNS, WINDOWS } from './world.js';
-import { WeatherEffects, seededRandom } from './weather.js';
-import { VillageLife } from './entities.js';
+import { WORLD, CHIMNEYS, LANTERNS, WINDOWS } from './world.js?v=4.1';
+import { WeatherEffects, seededRandom } from './weather.js?v=4.1';
+import { VillageLife } from './entities.js?v=4.1';
+import { drawClockStonework, drawClockTime } from './plaza-clock.js?v=4.1';
 
 const DARKNESS = { morning: .03, day: 0, evening: .3, night: .85 };
 const RIVER_GLINTS = [[1242, 34], [1270, 69], [1300, 99], [1363, 262], [1414, 316], [1300, 358], [1300, 540], [1349, 576], [1390, 609], [1290, 650], [1377, 720], [1431, 800], [1368, 935], [1360, 988]];
@@ -36,6 +37,7 @@ export class VillageScene {
     this.ctx.imageSmoothingEnabled = true;
     this.ctx.imageSmoothingQuality = 'high';
   }
+  setClock(time) { this.time = time; }
   setEnvironment(environment, initial = false, reducedMotion = false) {
     if (!initial && environment.period === this.environment.period && environment.weather === this.environment.weather) return;
     if (!initial) {
@@ -57,6 +59,7 @@ export class VillageScene {
     ctx.save(); ctx.clearRect(0, 0, w, h);
     const filter = { sunny: 'none', cloudy: 'saturate(.67) contrast(.88) brightness(.94)', rainy: 'saturate(.62) brightness(.8)', stormy: 'saturate(.48) brightness(.66)', snowy: 'saturate(.58) brightness(1.12)', foggy: 'saturate(.65) contrast(.8)' };
     ctx.filter = filter[weather]; ctx.drawImage(this.image, 0, 0, w, h); ctx.filter = 'none';
+    drawClockStonework(ctx);
     if (period !== 'day') {
       ctx.globalCompositeOperation = 'multiply';
       ctx.fillStyle = { morning: '#f5e9ce', evening: '#c7a99d', night: '#52718f' }[period];
@@ -103,6 +106,7 @@ export class VillageScene {
     } else ctx.drawImage(this.current, 0, 0);
     this.drawWater(ctx);
     this.drawLighting(ctx);
+    drawClockTime(ctx, this.time, this.light);
     this.life.draw(ctx, this.light);
     this.drawSmoke(ctx);
     if (this.environment.period === 'evening' || this.environment.period === 'night') this.drawFireflies(ctx);
@@ -116,11 +120,6 @@ export class VillageScene {
       const [x, y] = RIVER_GLINTS[i], p = (this.age * .28 + i * .27) % 1;
       ctx.strokeStyle = `rgba(197,234,211,${Math.sin(p * Math.PI) * .4})`; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(x + Math.sin(i) * p * 7, y + p * 13); ctx.lineTo(x + 8 + Math.sin(i) * p * 7, y + p * 13); ctx.stroke();
-    }
-    for (let i = 0; i < 3; i++) {
-      const p = (this.age * .38 + i / 3) % 1;
-      ctx.strokeStyle = `rgba(205,235,220,${(1 - p) * .43})`; ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.ellipse(FOUNTAIN.x, FOUNTAIN.y, 5 + p * 33, 3 + p * 25, 0, 0, Math.PI * 2); ctx.stroke();
     }
     // Foam and short vertical streaks sit within the original upper cascade.
     for (let i = 0; i < 11; i++) {

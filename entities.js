@@ -1,5 +1,5 @@
-import { NODES, findRoute } from './world.js';
-import { seededRandom } from './weather.js';
+import { NODES, findRoute } from './world.js?v=4.1';
+import { seededRandom } from './weather.js?v=4.1';
 
 const DESTINATIONS = ['west', 'northwest', 'north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'garden', 'inn', 'cottage', 'workshop', 'bridgeEast'];
 const RESIDENTS = [
@@ -113,10 +113,10 @@ export class VillageLife {
       routeTo(this.dog, this.dog.x < 700 ? 'east' : 'westLane'); this.dog.dashUntil = this.age + 13;
       this.event = { text: 'Le chien file à travers la place.', until: this.age + 12 };
     } else if (choice === 1) {
-      // Three nearby meeting spots sit just north of the fountain.
+      // Three nearby meeting spots sit just north of the clock.
       ['meetingA', 'meetingB', 'meetingC'].forEach((id, i) => routeTo(this.residents[i], id));
       this.meetingUntil = this.age + 45;
-      this.event = { text: 'Les voisins se retrouvent près de la fontaine.', until: this.age + 16 };
+      this.event = { text: 'Les voisins se retrouvent près de l’horloge.', until: this.age + 16 };
     } else if (choice === 2) {
       routeTo(this.residents[3], 'garden');
       this.event = { text: 'Il est temps de faire un tour au potager.', until: this.age + 12 };

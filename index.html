@@ -7,25 +7,14 @@
   <meta name="description" content="Un petit village vivant au fil des heures, prêt à accueillir la météo de Home Assistant.">
   <title>Le village · Home Assistant</title>
   <link rel="preload" as="image" href="assets/village.webp">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=4.1">
 </head>
 <body>
   <main class="app-shell">
     <section class="village-card" aria-label="Le village">
-      <canvas id="village" width="1536" height="1024" role="img" aria-label="Village vu du dessus : place et fontaine, maisons, potager et rivière. Des habitants et des animaux suivent les chemins.">Un village animé au fil de la journée. Les informations d’heure et de météo sont disponibles ci-dessous.</canvas>
+      <canvas id="village" width="1536" height="1024" role="img" aria-describedby="sceneDescription" aria-label="Village vu du dessus : grande horloge de place, maisons, potager et rivière. Des habitants et des animaux suivent les chemins.">Un village animé au fil de la journée.</canvas>
 
-      <div class="topbar">
-        <div class="status-block">
-          <svg id="periodIcon" class="period-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
-          <div><strong id="periodLabel" class="period-line">Le village</strong>
-            <div class="weather-line"><span id="weatherLabel">Un instant…</span><span id="weatherSource" class="weather-source" hidden></span></div>
-          </div>
-        </div>
-        <div class="clock-block">
-          <time id="clock">--:--</time>
-          <span id="dateLabel">…</span>
-        </div>
-      </div>
+      <p id="sceneDescription" class="sr-only"></p>
 
       <div class="event-feed" id="eventFeed">
         <svg class="event-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4m0 10v4M3 12h4m10 0h4M6 6l2 2m8 8 2 2M6 18l2-2M16 8l2-2"/><path d="m12 8 4 4-4 4-4-4z"/></svg>
@@ -56,6 +45,6 @@
     </section>
   </main>
 
-  <script type="module" src="main.js?v=4"></script>
+  <script type="module" src="main.js?v=4.1"></script>
 </body>
 </html>

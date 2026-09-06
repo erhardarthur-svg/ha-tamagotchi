@@ -23,26 +23,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
   content: ""; pointer-events: none; position: absolute; inset: 0; z-index: 1;
   box-shadow: inset 0 0 0 1px #efe0bb21, inset 0 -40px 65px -30px #0a1514b0; border-radius: inherit;
 }
-.topbar {
-  position: absolute; z-index: 2; top: max(20px, env(safe-area-inset-top));
-  left: max(20px, env(safe-area-inset-left)); right: max(20px, env(safe-area-inset-right));
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; pointer-events: none;
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
-.status-block, .clock-block, .event-feed {
+.event-feed {
   background: var(--glass); border: 1px solid var(--edge);
   box-shadow: 0 4px 20px #0002, inset 0 1px #fff05;
   -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
 }
-.status-block { display: flex; align-items: center; gap: 12px; padding: 13px 17px; border-radius: 12px; min-width: 0; }
-.status-block > div { min-width: 0; }
-.period-icon { width: 29px; height: 29px; color: var(--gold); flex-shrink: 0; }
-.period-line { display: block; font-size: 1rem; font-weight: 550; letter-spacing: .025em; overflow-wrap: anywhere; }
-.weather-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; margin-top: 4px; font-size: .875rem; color: var(--muted); }
-.weather-source { color: #b6bcae; font-size: .75rem; }
-.weather-source::before { content: "· "; }
-.clock-block { text-align: right; padding: 9px 16px 11px; border-radius: 12px; flex-shrink: 0; }
-#clock { display: block; font-variant-numeric: tabular-nums; font-size: clamp(1.75rem, 3.5vw, 2.5rem); font-weight: 350; line-height: 1.1; letter-spacing: -.055em; }
-#dateLabel { display: block; color: #d2d2c3; font-size: .8125rem; margin-top: 5px; }
 .event-feed {
   position: absolute; z-index: 2; left: max(20px, env(safe-area-inset-left));
   bottom: max(20px, env(safe-area-inset-bottom)); max-width: calc(100% - 40px);
@@ -81,22 +70,10 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
 @media (max-width: 600px) {
   .app-shell { padding: 0; }
   .village-card { aspect-ratio: 4 / 3; border-radius: 0; }
-  .topbar { top: max(12px, env(safe-area-inset-top)); left: 12px; right: 12px; gap: 8px; }
-  .status-block { gap: 9px; padding: 10px 12px; border-radius: 9px; }
-  .period-icon { width: 24px; height: 24px; }
-  .period-line { font-size: .9375rem; }
-  .weather-line { gap: 4px; margin-top: 3px; }
-  .clock-block { padding: 8px 12px; border-radius: 9px; }
-  #clock { font-size: 1.75rem; }
-  #dateLabel { font-size: .75rem; }
   .event-feed { left: 12px; bottom: max(12px, env(safe-area-inset-bottom)); max-width: calc(100% - 24px); padding: 9px 12px; gap: 8px; }
   #eventText { font-size: .8125rem; }
 }
 @media (max-height: 300px) {
-  .topbar { top: 8px; left: 8px; right: 8px; }
-  .status-block { padding: 7px 10px; gap: 8px; }
-  .clock-block { padding: 6px 10px; }
   .event-feed { bottom: 8px; left: 8px; padding: 7px 10px; }
-  #clock { font-size: 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }

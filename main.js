@@ -1,8 +1,8 @@
-import { VillageClock } from './time.js';
-import { VillageWeather } from './weather.js';
-import { VillageScene } from './scene.js';
-import { VillageUI } from './ui.js';
-import { installBridge } from './bridge.js';
+import { VillageClock } from './time.js?v=4.1';
+import { VillageWeather } from './weather.js?v=4.1';
+import { VillageScene } from './scene.js?v=4.1';
+import { VillageUI } from './ui.js?v=4.1';
+import { installBridge } from './bridge.js?v=4.1';
 
 const clock = new VillageClock(), weather = new VillageWeather();
 let scene, lastUI = 0, externalWeatherAt = null;
@@ -16,6 +16,7 @@ function refresh() {
     weather.setExternal(null); externalWeatherAt = null;
   }
   const time = clock.read(), conditions = weather.read(time);
+  scene?.setClock(time);
   scene?.setEnvironment({ period: time.period, weather: conditions.kind }, false, reducedMotion);
   ui.update(time, conditions, scene?.life, clock.forcedPeriod, weather.forced);
 }
