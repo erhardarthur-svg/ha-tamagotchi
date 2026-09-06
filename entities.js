@@ -1,8 +1,8 @@
-import { NODES, findRoute } from './world.js?v=4.1';
-import { seededRandom } from './weather.js?v=4.1';
+import { NODES, findRoute } from './world.js?v=4.2';
+import { seededRandom } from './weather.js?v=4.2';
 
 const DESTINATIONS = ['west', 'northwest', 'north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'garden', 'inn', 'cottage', 'workshop', 'bridgeEast'];
-const RESIDENTS = [
+const PALETTE = [
   { name: 'Arthur', color: '#c69950', skin: '#dab48b', hair: '#4a362e', home: 'inn', start: 'west' },
   { name: 'Lina', color: '#a64e4d', skin: '#d4a680', hair: '#392b29', home: 'cottage', start: 'northeast' },
   { name: 'Milo', color: '#61979b', skin: '#b48565', hair: '#3f3026', home: 'home', start: 'south' },
@@ -10,6 +10,10 @@ const RESIDENTS = [
   { name: 'Ezra', color: '#8a799f', skin: '#86583d', hair: '#28221f', home: 'workshop', start: 'northwest' },
   { name: 'Sami', color: '#b57247', skin: '#c49a70', hair: '#524133', home: 'home', start: 'east' },
 ];
+const NAMES = ['Arthur', 'Lina', 'Milo', 'Nora', 'Ezra', 'Sami', 'Rose', 'Léon', 'Jade', 'Noé', 'Alma', 'Hugo', 'Iris', 'Paul', 'Lou', 'Émile', 'Anna', 'Jules', 'Zoé', 'Adam', 'Alice', 'Oscar', 'Maya', 'Eli'];
+const JOBS = ['promenade', 'livraison', 'jardinage', 'conversation', 'artisanat', 'promenade'];
+const RESIDENTS = NAMES.map((name, id) => ({ ...PALETTE[id % PALETTE.length], name,
+  home: ['inn', 'home', 'workshop'][id % 3], start: DESTINATIONS[id % DESTINATIONS.length], job: JOBS[id % JOBS.length] }));
 
 function traveller(node, data) {
   return { x: NODES[node][0], y: NODES[node][1], node, route: [], wait: 0, walk: 0, facing: 'down', moving: false, hidden: false, destination: node, speed: 33, ...data };
@@ -39,20 +43,23 @@ export class VillageLife {
   constructor(random = seededRandom(10504)) {
     this.random = random; this.age = 0; this.period = 'day'; this.weather = 'sunny';
     this.event = null; this.nextEvent = 18; this.meetingUntil = 0;
-    this.residents = RESIDENTS.map((v, id) => traveller(v.start, { ...v, id, speed: 29 + id * 1.5, wait: 1 + id * 1.7 }));
+    this.scheduled = null;
+    this.residents = RESIDENTS.map((v, id) => traveller(v.start, { ...v, id, speed: 29 + id % 7 * 2, wait: .3 + id % 8 * .45, lane: (id % 3 - 1) * 6 }));
     this.dog = traveller('westLane', { kind: 'dog', speed: 40, dashUntil: 0 });
     this.cat = traveller('innStep', { kind: 'cat', speed: 24, wait: 9 });
     this.chickens = Array.from({ length: 3 }, (_, i) => ({ kind: 'chicken', x: 151 + i * 28, y: 875 + i * 7, tx: 151 + i * 28, ty: 875 + i * 7, wait: i + 1, walk: 0, facing: 'right', moving: false }));
   }
   shouldShelter(v) {
-    return (this.period === 'night' && v.id !== 0) || (this.weather === 'stormy' && v.id !== 0)
-      || (this.period === 'evening' && v.id > 3) || (this.weather === 'rainy' && v.id > 3);
+    if (this.scheduled && v.id < this.scheduled.count) return false;
+    return (this.period === 'night' && v.id % 8 !== 0) || (this.weather === 'stormy' && v.id % 8 !== 0)
+      || (this.period === 'evening' && v.id > 11) || (this.weather === 'rainy' && v.id > 13);
   }
   setEnvironment({ period, weather }, initial = false) {
     const changed = period !== this.period || weather !== this.weather;
     this.period = period; this.weather = weather;
     if (!changed && !initial) return;
-    this.event = null; this.meetingUntil = 0;
+    if (!this.scheduled) this.event = null;
+    this.meetingUntil = 0;
     for (const v of this.residents) {
       if (this.shouldShelter(v)) {
         if (initial) { [v.x, v.y] = NODES[v.home]; v.node = v.home; v.route = []; v.hidden = true; }
@@ -63,23 +70,48 @@ export class VillageLife {
   }
   destination(v) {
     if (this.period === 'night' || this.weather === 'stormy') return ['west', 'east', 'bridgeWest', 'south'][Math.floor(this.random() * 4)];
-    const choices = this.period === 'morning' && v.id % 2 ? ['garden', 'workshop', 'inn'] : DESTINATIONS;
-    return choices[Math.floor(this.random() * choices.length)];
+    const jobs = { livraison: ['inn', 'workshop', 'home', 'bridgeEast'], jardinage: ['garden', 'southPath', 'home'], artisanat: ['workshop', 'inn', 'westLane'], conversation: ['meetingA', 'meetingB', 'meetingC', 'innLane'] };
+    const choices = this.random() < .65 && jobs[v.job] || DESTINATIONS;
+    const free = choices.filter(node => node !== v.node && this.residents.filter(other => other !== v && other.destination === node && !other.hidden).length < 3);
+    const pool = free.length ? free : DESTINATIONS;
+    return pool[Math.floor(this.random() * pool.length)];
+  }
+  startAppointment(event) {
+    this.scheduled = { ...event, started: this.age, until: this.age + event.duration, wallUntil: Date.now() + event.duration * 1000 };
+    this.event = this.scheduled;
+    this.residents.forEach(v => {
+      if (v.id >= event.count) return;
+      v.hidden = false; v.lantern = event.id === 'night';
+      routeTo(v, `gather${v.id}`);
+    });
+  }
+  endAppointment() {
+    this.scheduled = null; this.event = null; this.nextEvent = this.age + 25;
+    for (const v of this.residents) {
+      v.lantern = false;
+      if (!v.hidden) routeTo(v, this.shouldShelter(v) ? v.home : this.destination(v));
+    }
   }
   update(dt) {
     this.age += dt;
+    if (this.scheduled && this.age > this.scheduled.until) this.endAppointment();
     if (this.event && this.age > this.event.until) this.event = null;
     const pace = this.period === 'night' ? .58 : this.period === 'evening' ? .72 : this.period === 'morning' ? .85 : 1;
     for (const v of this.residents) {
       if (v.hidden) continue;
       if (v.route.length) { walk(v, dt, v.speed * pace * (this.weather === 'stormy' ? 1.3 : 1)); continue; }
       v.moving = false;
+      if (this.scheduled && v.id < this.scheduled.count) {
+        v.facing = v.x < 711 ? 'right' : 'left';
+        if (this.scheduled.id === 'night' && this.age - this.scheduled.started > 55 && v.destination.startsWith('gather')) routeTo(v, 'bridgeWest');
+        continue;
+      }
       if (this.shouldShelter(v) && v.node === v.home) { v.hidden = true; continue; }
       if (this.age < this.meetingUntil && v.id < 3) continue;
       v.wait -= dt;
       if (v.wait > 0) continue;
       if (this.shouldShelter(v)) routeTo(v, v.home);
-      else { routeTo(v, this.destination(v)); v.wait = 3 + this.random() * (this.period === 'evening' ? 24 : 12); }
+      else { routeTo(v, this.destination(v)); v.wait = 1 + this.random() * (this.period === 'evening' ? 15 : 6); }
     }
     this.updatePet(this.dog, dt, ['westLane', 'east', 'bridgeEast', 'south', 'innStep']);
     this.updatePet(this.cat, dt, ['innStep', 'innLane', 'northwest', 'west']);
@@ -107,6 +139,7 @@ export class VillageLife {
     if (pet.wait <= 0) { routeTo(pet, points[Math.floor(this.random() * points.length)]); pet.wait = 5 + this.random() * 15; }
   }
   triggerEvent() {
+    if (this.scheduled) return;
     if (this.period === 'night' || this.weather === 'stormy' || this.weather === 'rainy') return;
     const choice = Math.floor(this.random() * 4);
     if (choice === 0) {
@@ -116,7 +149,7 @@ export class VillageLife {
       // Three nearby meeting spots sit just north of the clock.
       ['meetingA', 'meetingB', 'meetingC'].forEach((id, i) => routeTo(this.residents[i], id));
       this.meetingUntil = this.age + 45;
-      this.event = { text: 'Les voisins se retrouvent près de l’horloge.', until: this.age + 16 };
+      this.event = { text: 'Les voisins discutent près de la fontaine.', until: this.age + 16 };
     } else if (choice === 2) {
       routeTo(this.residents[3], 'garden');
       this.event = { text: 'Il est temps de faire un tour au potager.', until: this.age + 12 };
@@ -128,10 +161,11 @@ export class VillageLife {
     const characters = [...this.residents, this.dog, this.cat, ...this.chickens].sort((a, b) => a.y - b.y);
     for (const v of characters) {
       if (v.hidden || (v.kind === 'chicken' && (this.period === 'night' || this.weather === 'stormy'))) continue;
-      ctx.save(); ctx.translate(Math.round(v.x), Math.round(v.y));
+      ctx.save(); ctx.translate(Math.round(v.x + (v.kind ? 0 : v.lane)), Math.round(v.y));
       ctx.fillStyle = this.weather === 'sunny' ? '#14201a60' : '#14201a38';
       ctx.beginPath(); ctx.ellipse(3, 1, v.kind ? 9 : 8, 3.5, -.25, 0, Math.PI * 2); ctx.fill();
-      const bob = v.moving ? Math.sin(v.walk * .7) : 0;
+      const dancing = this.scheduled?.id === 'afternoon' && v.id < this.scheduled.count && !v.route.length;
+      const bob = v.moving ? Math.sin(v.walk * .7) : dancing ? Math.sin(this.age * 5 + v.id) * 3 : 0;
       if (v.kind) drawAnimal(ctx, v, bob);
       else drawResident(ctx, v, bob, this.weather, this.period, light);
       ctx.restore();
@@ -154,7 +188,12 @@ function drawResident(ctx, v, bob, weather, period, darkness) {
     pixel(ctx, v.facing === 'left' ? -5 : v.facing === 'right' ? 2 : -2, -21, 3, 2, '#493b2f');
   }
   pixel(ctx, -3, -27, 7, 3, '#ffffff13');
-  if (v.id === 0) { pixel(ctx, -7, -26, 14, 3, '#ab8b51'); pixel(ctx, -4, -30, 9, 5, '#c0a16c'); }
+  if (v.id % 4 === 0) { pixel(ctx, -7, -26, 14, 3, '#ab8b51'); pixel(ctx, -4, -30, 9, 5, '#c0a16c'); }
+  if (v.job === 'livraison') { pixel(ctx, 5, -12, 10, 9, '#9b7043'); pixel(ctx, 6, -11, 8, 2, '#cfaa69'); }
+  if (v.job === 'jardinage' && !v.moving) { pixel(ctx, 10, -19, 2, 21, '#976a3b'); pixel(ctx, 7, -20, 8, 3, '#809392'); }
+  if (v.job === 'conversation' && !v.moving) {
+    pixel(ctx, -3, -38, 9, 5, '#efe4bdc0'); pixel(ctx, -2, -33, 2, 2, '#efe4bdc0');
+  }
   if (darkness > .1) { ctx.fillStyle = `rgba(19,32,52,${darkness * .28})`; ctx.fillRect(-10, -30, 20, 32); }
   if (weather === 'rainy' || weather === 'stormy') {
     ctx.fillStyle = v.id % 2 ? '#7b4644' : '#717e63';
@@ -163,7 +202,7 @@ function drawResident(ctx, v, bob, weather, period, darkness) {
     for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3; ctx.beginPath(); ctx.moveTo(0, -23); ctx.lineTo(Math.cos(a) * 14, -23 + Math.sin(a) * 14); ctx.stroke(); }
     pixel(ctx, -1, -25, 3, 3, '#d6bd8d');
   }
-  if (period === 'night' && v.id === 0) {
+  if (v.lantern || (period === 'night' && v.id % 8 === 0)) {
     const glow = ctx.createRadialGradient(11, -8, 0, 11, -8, 35);
     glow.addColorStop(0, '#ffd58e66'); glow.addColorStop(1, '#ffd58e00'); ctx.fillStyle = glow; ctx.fillRect(-24, -43, 70, 70);
     pixel(ctx, 8, -11, 5, 7, '#5d4831'); pixel(ctx, 9, -10, 3, 4, '#ffe8a5');

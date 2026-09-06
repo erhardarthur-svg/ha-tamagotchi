@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#19271e">
   <meta name="description" content="Un petit village vivant au fil des heures, prêt à accueillir la météo de Home Assistant.">
   <title>Le village · Home Assistant</title>
-  <link rel="preload" as="image" href="assets/village.webp">
-  <link rel="stylesheet" href="style.css?v=4.1">
+  <link rel="preload" as="image" href="assets/village-church.webp">
+  <link rel="stylesheet" href="style.css?v=4.2">
 </head>
 <body>
   <main class="app-shell">
@@ -39,12 +39,17 @@
           <button data-weather="snowy" aria-pressed="false">Neige</button>
           <button data-weather="foggy" aria-pressed="false">Brouillard</button>
         </div></fieldset>
+        <fieldset><legend>Rendez-vous du village</legend><div class="debug-options">
+          <button data-event="noon">12 h · Clocher</button>
+          <button data-event="afternoon">16 h 20 · Danse</button>
+          <button data-event="night">4 h 20 · Lanternes</button>
+        </div></fieldset>
         <button id="autoBtn" aria-pressed="true">Auto</button>
         <p class="debug-note">Auto rétablit l’heure locale et la météo automatique. Sans Home Assistant, la météo est une ambiance simulée.</p>
       </section>
     </section>
   </main>
 
-  <script type="module" src="main.js?v=4.1"></script>
+  <script type="module" src="main.js?v=4.2"></script>
 </body>
 </html>

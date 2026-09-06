@@ -1,11 +1,12 @@
-import { VillageClock } from './time.js?v=4.1';
-import { VillageWeather } from './weather.js?v=4.1';
-import { VillageScene } from './scene.js?v=4.1';
-import { VillageUI } from './ui.js?v=4.1';
-import { installBridge } from './bridge.js?v=4.1';
+import { VillageClock } from './time.js?v=4.2';
+import { VillageWeather } from './weather.js?v=4.2';
+import { VillageScene } from './scene.js?v=4.2';
+import { VillageUI } from './ui.js?v=4.2';
+import { installBridge } from './bridge.js?v=4.2';
+import { APPOINTMENTS } from './events.js?v=4.2';
 
 const clock = new VillageClock(), weather = new VillageWeather();
-let scene, lastUI = 0, externalWeatherAt = null;
+let scene, lastUI = 0, externalWeatherAt = null, previewEvent = null;
 const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
 let reducedMotion = motionPreference.matches;
 if (window.parent !== window || new URLSearchParams(location.search).get('embed') === '1') document.body.classList.add('embedded');
@@ -15,15 +16,24 @@ function refresh() {
   if (externalWeatherAt !== null && Date.now() - externalWeatherAt > 30 * 60 * 1000) {
     weather.setExternal(null); externalWeatherAt = null;
   }
-  const time = clock.read(), conditions = weather.read(time);
-  scene?.setClock(time);
+  if (previewEvent && !scene?.life.scheduled) { previewEvent = null; clock.force(null); }
+  const time = clock.read();
+  if (previewEvent) Object.assign(time, { hour: previewEvent.hour, minute: previewEvent.minute, clock: `${String(previewEvent.hour).padStart(2, '0')}:${String(previewEvent.minute).padStart(2, '0')}`, forced: true });
+  const conditions = weather.read(time);
   scene?.setEnvironment({ period: time.period, weather: conditions.kind }, false, reducedMotion);
+  scene?.setClock(time);
   ui.update(time, conditions, scene?.life, clock.forcedPeriod, weather.forced);
 }
 const ui = new VillageUI({
-  onPeriod: period => { clock.force(period); refresh(); },
+  onPeriod: period => { previewEvent = null; scene?.life.endAppointment(); clock.force(period); refresh(); },
   onWeather: kind => { weather.force(kind); refresh(); },
-  onAuto: () => { clock.force(null); weather.force(null); refresh(); },
+  onAuto: () => { previewEvent = null; scene?.life.endAppointment(); clock.force(null); weather.force(null); refresh(); },
+  onEvent: id => {
+    const event = APPOINTMENTS.find(e => e.id === id);
+    if (!scene || !event) return;
+    previewEvent = event; clock.force(event.id === 'night' ? 'night' : 'day');
+    scene.life.startAppointment(event); refresh();
+  },
 });
 const removeBridge = installBridge(state => {
   clock.setExternal(state);
@@ -38,7 +48,7 @@ async function start() {
   const image = new Image();
   await new Promise((resolve, reject) => {
     image.onload = resolve; image.onerror = () => reject(new Error('Décor introuvable.'));
-    image.src = new URL('./assets/village.webp', import.meta.url).href;
+    image.src = new URL('./assets/village-church.webp', import.meta.url).href;
   });
   const canvas = document.getElementById('village');
   scene = new VillageScene(canvas, image);

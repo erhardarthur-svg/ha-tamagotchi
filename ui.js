@@ -1,8 +1,8 @@
-import { PERIODS } from './time.js?v=4.1';
-import { WEATHER_LABELS, ambienceMessage } from './weather.js?v=4.1';
+import { PERIODS } from './time.js?v=4.2';
+import { WEATHER_LABELS, ambienceMessage } from './weather.js?v=4.2';
 
 export class VillageUI {
-  constructor({ onPeriod, onWeather, onAuto }, root = document) {
+  constructor({ onPeriod, onWeather, onAuto, onEvent }, root = document) {
     this.root = root; this.last = {}; this.debug = new URLSearchParams(location.search).get('debug') === '1';
     this.nodes = Object.fromEntries(['sceneDescription', 'eventText', 'debugToggle', 'debugPanel', 'debugClose', 'autoBtn', 'bootMessage'].map(id => [id, root.getElementById(id)]));
     if (!this.debug) return;
@@ -17,6 +17,7 @@ export class VillageUI {
     root.querySelectorAll('[data-period]').forEach(button => button.addEventListener('click', () => onPeriod(button.dataset.period)));
     root.querySelectorAll('[data-weather]').forEach(button => button.addEventListener('click', () => onWeather(button.dataset.weather)));
     this.nodes.autoBtn.addEventListener('click', onAuto);
+    root.querySelectorAll('[data-event]').forEach(button => button.addEventListener('click', () => onEvent(button.dataset.event)));
   }
   text(id, value) { if (this.last[id] !== value) { this.nodes[id].textContent = value; this.last[id] = value; } }
   update(time, weather, life, forcedPeriod, forcedWeather) {

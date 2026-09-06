@@ -1,6 +1,10 @@
-# HA Village — V4.1
+# HA Village — V4.2
 
-La place accueille désormais une grande horloge de pierre à la place de la fontaine : aiguilles réelles, heure 24 h et date inscrites dans le cadran, éclairage doux la nuit. Elle suit la même horloge que Home Assistant ou les forçages Debug. Les habitants contournent sa nouvelle emprise. Les badges supérieurs d’heure, de période et de météo ont été supprimés ; la météo s’exprime uniquement par ses effets visuels. Son origine simulée reste précisée dans le Debug et dans le texte accessible aux lecteurs d’écran.
+Une véritable église en pierre et son clocher remplacent la maison au toit bleu. Les aiguilles de son cadran suivent l’heure du village, avec un éclairage doux la nuit. La fontaine retrouve sa place centrale. Aucun badge d’heure ou de météo ; l’heure exacte et la date restent disponibles aux lecteurs d’écran.
+
+24 habitants parcourent les chemins : livraisons, jardinage, promenades, conversations et pauses. Trois veilleurs restent dehors la nuit. Les destinations tiennent compte de leur fréquentation et chaque rassemblement dispose de places distinctes.
+
+Rendez-vous automatiques selon l’heure locale (ou le fuseau fourni par HA) : **12 h**, cloche animée et rassemblement ; **16 h 20**, petite danse sur la place ; **4 h 20**, sortie aux lanternes. Durée de 100 à 120 secondes, sans audio. La page doit être ouverte pendant la minute correspondante : aucun rattrapage des heures manquées. Chaque rendez-vous est déclenché au plus une fois par journée pendant la session ; recharger pendant cette minute peut le relancer. Le mode `?debug=1` propose trois boutons de prévisualisation ; Auto annule la prévisualisation. Les mouvements réduits désactivent les animations, sans bloquer l’heure ni l’expiration des événements.
 
 Un diorama de village animé, destiné à une tuile Home Assistant. Le décor original est une illustration pixel-art vue en plongée, avec une place, quatre bâtiments principaux, un abri, un potager, un pont et une rivière. L’horloge fonctionnelle, les habitants, animaux, éclairages, fumées, ondulations et effets météo sont dessinés séparément en Canvas 2D.
 
@@ -85,14 +89,15 @@ Les conditions moins courantes sont regroupées dans les six ambiances demandée
 | `index.html` / `style.css` | Surcouche, responsive, commandes discrètes |
 | `main.js` | Initialisation, boucle 30 i/s, cycle de vie, repli météo |
 | `scene.js` | Décor en cache, lumière, eau, fenêtres, lanternes, fumée |
-| `plaza-clock.js` | Horloge de pierre intégrée à la place, aiguilles, heure et date |
+| `church-clock.js` | Aiguilles du clocher, éclairage et cloche animée |
+| `events.js` | Rendez-vous quotidiens, détection sur l’heure civile |
 | `world.js` | Coordonnées du décor, chemins, points d’intérêt |
 | `entities.js` | Habitants, chien, chat, poules, trajets et événements |
 | `time.js` | Horloge locale ou externe, fuseau, quatre périodes |
 | `weather.js` | Six météos, simulation locale, particules, textes d’ambiance |
 | `bridge.js` | Validation des données et pont HA |
 | `ui.js` | Affichage et forçages réservés au Debug |
-| `assets/village.webp` | Décor original optimisé, 1536 × 1024 |
+| `assets/village-church.webp` | Décor original optimisé, 1536 × 1024 |
 
 Pour modifier le plan du village, mettre à jour le décor et ses ancrages dans `world.js` ensemble. Le décor est original, généré pour ce projet ; aucun asset de RimWorld n’a été utilisé. Les personnages sont des sprites dessinés en code, avec couleurs, silhouettes, pas et orientations distincts.
 

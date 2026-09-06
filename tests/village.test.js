@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { VillageClock, periodForHour } from '../time.js';
 import { VillageWeather, WeatherEffects, simulatedWeather, normalizeWeather } from '../weather.js';
-import { NODES, GRAPH, SOLID_AREAS, PLAZA_CLOCK, findRoute } from '../world.js';
-import { handAngles } from '../plaza-clock.js';
+import { NODES, GRAPH, SOLID_AREAS, FOUNTAIN, findRoute } from '../world.js';
+import { handAngles } from '../church-clock.js';
+import { APPOINTMENTS, VillageAppointments } from '../events.js';
 import { VillageLife } from '../entities.js';
 import { sanitizeState, acceptsMessage } from '../bridge.js';
 
@@ -41,7 +42,7 @@ test('simulation is deterministic, seasonal and constant within the same weather
   for (const invalid of ['__proto__', 'constructor', 'unavailable', '', null, {}, 1]) assert.equal(normalizeWeather(invalid), null);
 });
 
-test('all destinations connect, and every route avoids buildings, the large clock and unbridged river', () => {
+test('all destinations connect, and every route avoids buildings, fountain and unbridged river', () => {
   for (const from of Object.keys(NODES)) for (const to of Object.keys(NODES)) {
     if (from !== to) assert.equal(findRoute(from, to).at(-1), to, `${from} -> ${to}`);
   }
@@ -50,7 +51,7 @@ test('all destinations connect, and every route avoids buildings, the large cloc
     for (let t = 0; t <= 1; t += .02) {
       const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t;
       for (const rect of SOLID_AREAS) assert.ok(!(x > rect.x && x < rect.x + rect.w && y > rect.y && y < rect.y + rect.h), `${from} -> ${to} enters building at ${x},${y}`);
-      assert.ok(Math.hypot(x - PLAZA_CLOCK.x, y - PLAZA_CLOCK.y) > PLAZA_CLOCK.radius + 5, `${from} -> ${to} enters clock`);
+      assert.ok(Math.hypot(x - FOUNTAIN.x, y - FOUNTAIN.y) > FOUNTAIN.radius, `${from} -> ${to} enters fountain`);
       if (x > 1190) assert.ok(Math.abs(y - 466) < 1, 'river crossed outside the bridge');
     }
   }
@@ -61,7 +62,7 @@ test('villagers come home at night, stay sheltered, and resume after dawn', () =
   for (let i = 0; i < 3000; i++) life.update(1 / 30);
   life.setEnvironment({ period: 'night', weather: 'sunny' });
   for (let i = 0; i < 7500; i++) life.update(1 / 30);
-  assert.equal(life.residents.filter(v => v.hidden).length, 5);
+  assert.equal(life.residents.filter(v => v.hidden).length, 21);
   assert.equal(life.residents[0].hidden, false);
   assert.ok(life.dog.hidden && life.cat.hidden);
   assert.equal(life.event, null);
@@ -70,7 +71,7 @@ test('villagers come home at night, stay sheltered, and resume after dawn', () =
   assert.deepEqual(life.residents.filter(v => v.hidden).map(v => [v.x, v.y]), locations);
   life.setEnvironment({ period: 'morning', weather: 'sunny' });
   for (let i = 0; i < 900; i++) life.update(1 / 30);
-  assert.equal(life.residents.filter(v => !v.hidden).length, 6);
+  assert.equal(life.residents.filter(v => !v.hidden).length, 24);
   assert.ok(life.residents.some(v => v.route.length));
 });
 
@@ -120,12 +121,36 @@ test('entrypoint is self-contained; debug is hidden by default and artwork is un
   assert.equal(/class="topbar"|id="weatherLabel"|id="clock"/.test(html), false);
   assert.equal(/https?:\/\//.test(html), false);
   for (const match of html.matchAll(/(?:src|href)="([^"?]+)(?:\?[^"]*)?"/g)) await stat(new URL(`../${match[1]}`, import.meta.url));
-  assert.ok((await stat(new URL('../assets/village.webp', import.meta.url))).size < 1000000);
+  assert.ok((await stat(new URL('../assets/village-church.webp', import.meta.url))).size < 1000000);
 });
 
-test('plaza clock hands use the real minute including the hour hand offset', () => {
+test('church clock hands use the real minute including the hour hand offset', () => {
   assert.deepEqual(handAngles(0, 0), { hour: 0, minute: 0 });
   assert.ok(Math.abs(handAngles(15, 30).minute - Math.PI) < 1e-12);
   assert.equal(handAngles(15, 30).hour, 3.5 * Math.PI / 6);
   assert.deepEqual(handAngles(12, 0), handAngles(0, 0));
+});
+
+test('appointments trigger only at their civil minute, once daily, independently of debug', () => {
+  const schedule = new VillageAppointments();
+  for (const event of APPOINTMENTS) {
+    const time = { dayKey: '2026-9-6', hour: event.hour, minute: event.minute, forced: false };
+    assert.equal(schedule.read({ ...time, forced: true }), null);
+    assert.equal(schedule.read(time).id, event.id);
+    assert.equal(schedule.read(time), null);
+  }
+  assert.equal(schedule.read({ dayKey: '2026-9-6', hour: 12, minute: 5 }), null);
+  assert.equal(schedule.read({ dayKey: '2026-9-7', hour: 12, minute: 0 }).id, 'noon');
+});
+
+test('night appointment wakes lantern carriers and releases them to their homes afterward', () => {
+  const life = new VillageLife();
+  life.setEnvironment({ period: 'night', weather: 'sunny' }, true);
+  life.startAppointment(APPOINTMENTS[2]);
+  assert.equal(life.residents.filter(v => v.lantern && !v.hidden).length, 7);
+  for (let i = 0; i < 3300; i++) life.update(1 / 30);
+  assert.equal(life.scheduled, null);
+  assert.equal(life.residents.some(v => v.lantern), false);
+  for (let i = 0; i < 9000; i++) life.update(1 / 30);
+  assert.equal(life.residents.filter(v => v.hidden).length, 21);
 });
