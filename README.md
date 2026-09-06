@@ -1,4 +1,10 @@
-# HA Village — V4.2
+# HA Village — V4.3
+
+Les parapluies sont supprimés. Les habitants accélèrent au départ, ralentissent à destination, gardent une distance de suivi et se décalent à droite pour se croiser. Les pauses correspondent à une activité, plutôt qu’à un changement de destination permanent.
+
+Entre 12 h et 14 h, trois services de huit habitants se succèdent aux tables existantes de la taverne (12 h–12 h 35, 12 h 40–13 h 15, 13 h 20–13 h 55), avec des départs échelonnés. Ils restent à leur place pour manger puis reprennent leur journée. Le rassemblement de midi reste prioritaire et se termine avant le déjeuner. Le bouton Debug « Jour » permet de voir le service de 13 h.
+
+Le jardinage et l’artisanat ont des pauses de travail plus longues ; les livraisons relient les bâtiments. Deux voisins à proximité peuvent s’arrêter, se tourner l’un vers l’autre et discuter. Des bulles monochromes indiquent repas, conversation, jardinage, outils, colis et musique ; cinq au maximum, espacées et intermittentes. Sous la pluie, le déjeuner se fait à l’intérieur de la taverne ; pendant l’orage, la mise à l’abri reste prioritaire. Aucun nouvel asset ni dépendance réseau.
 
 Une véritable église en pierre et son clocher remplacent la maison au toit bleu. Les aiguilles de son cadran suivent l’heure du village, avec un éclairage doux la nuit. La fontaine retrouve sa place centrale. Aucun badge d’heure ou de météo ; l’heure exacte et la date restent disponibles aux lecteurs d’écran.
 

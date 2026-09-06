@@ -6,6 +6,7 @@ import { VillageWeather, WeatherEffects, simulatedWeather, normalizeWeather } fr
 import { NODES, GRAPH, SOLID_AREAS, FOUNTAIN, findRoute } from '../world.js';
 import { handAngles } from '../church-clock.js';
 import { APPOINTMENTS, VillageAppointments } from '../events.js';
+import { dailyPlan } from '../routines.js';
 import { VillageLife } from '../entities.js';
 import { sanitizeState, acceptsMessage } from '../bridge.js';
 
@@ -153,4 +154,42 @@ test('night appointment wakes lantern carriers and releases them to their homes 
   assert.equal(life.residents.some(v => v.lantern), false);
   for (let i = 0; i < 9000; i++) life.update(1 / 30);
   assert.equal(life.residents.filter(v => v.hidden).length, 21);
+});
+
+test('each lunch service has eight distinct seats; residents eat on arrival and leave after lunch', () => {
+  const life = new VillageLife();
+  for (const minute of [725, 765, 805]) {
+    const diners = life.residents.filter(v => dailyPlan(v, minute).kind === 'meal');
+    assert.equal(diners.length, 8);
+    assert.equal(new Set(diners.map(v => dailyPlan(v, minute).target)).size, 8);
+  }
+  life.setClock({ hour: 13, minute: 0 });
+  for (let i = 0; i < 9000; i++) life.update(1 / 30);
+  assert.equal(life.residents.filter(v => v.activity === 'meal').length, 8);
+  for (const v of life.residents.filter(v => v.activity === 'meal')) {
+    assert.equal(v.node, `seat${v.id % 8}`); assert.equal(v.route.length, 0);
+  }
+  life.setClock({ hour: 14, minute: 0 });
+  assert.equal(life.residents.filter(v => v.activity === 'meal').length, 0);
+});
+
+test('rain sends lunch indoors without umbrellas; clearing rain brings diners back outside', async () => {
+  const life = new VillageLife(); life.setEnvironment({ period: 'day', weather: 'rainy' }); life.setClock({ hour: 13, minute: 0 });
+  for (let i = 0; i < 9000; i++) life.update(1 / 30);
+  assert.equal(life.residents.filter(v => v.activity === 'meal' && v.hidden && v.node === 'inn').length, 8);
+  life.setEnvironment({ period: 'day', weather: 'sunny' });
+  for (let i = 0; i < 4500; i++) life.update(1 / 30);
+  assert.equal(life.residents.filter(v => v.activity === 'meal' && !v.hidden).length, 8);
+  const source = await readFile(new URL('../entities.js', import.meta.url), 'utf8');
+  assert.ok(!source.includes("ctx.arc(0, -23, 15"));
+});
+
+test('conversations require two nearby idle residents, not a lone walker', () => {
+  const life = new VillageLife(); life.residents.forEach(v => { v.hidden = true; });
+  const [a, b] = life.residents;
+  Object.assign(a, { hidden: false, x: 600, y: 350, activity: 'rest' });
+  Object.assign(b, { hidden: false, x: 625, y: 350, activity: 'rest' });
+  life.startConversation();
+  assert.equal(a.activity, 'chat'); assert.equal(b.activity, 'chat');
+  assert.equal(a.facing, 'right'); assert.equal(b.facing, 'left');
 });

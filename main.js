@@ -1,9 +1,9 @@
-import { VillageClock } from './time.js?v=4.2';
-import { VillageWeather } from './weather.js?v=4.2';
-import { VillageScene } from './scene.js?v=4.2';
-import { VillageUI } from './ui.js?v=4.2';
-import { installBridge } from './bridge.js?v=4.2';
-import { APPOINTMENTS } from './events.js?v=4.2';
+import { VillageClock } from './time.js?v=4.3';
+import { VillageWeather } from './weather.js?v=4.3';
+import { VillageScene } from './scene.js?v=4.3';
+import { VillageUI } from './ui.js?v=4.3';
+import { installBridge } from './bridge.js?v=4.3';
+import { APPOINTMENTS } from './events.js?v=4.3';
 
 const clock = new VillageClock(), weather = new VillageWeather();
 let scene, lastUI = 0, externalWeatherAt = null, previewEvent = null;

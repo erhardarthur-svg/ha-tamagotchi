@@ -24,6 +24,12 @@ export const NODES = Object.freeze({
   south: [706, 564], southwest: [595, 536],
   northPath: [683, 231], northGate: [676, 16],
   innLane: [488, 349], innStep: [407, 334], inn: [407, 312],
+  terrace: [278, 345], terraceWest: [216, 345], terraceEast: [279, 345],
+  ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => {
+    const y = [239, 262, 300, 323][Math.floor(i / 2)];
+    return [`seat${i}`, [i % 2 ? 270 : 232, y]];
+  })),
+  ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`aisle${i}`, [i % 2 ? 279 : 216, [239, 262, 300, 323][Math.floor(i / 2)]]])),
   cottageStep: [875, 324], cottage: [874, 305],
   southLane: [685, 686], southPath: [686, 799], southGate: [674, 1008],
   homePath: [582, 783], homeTurn: [514, 737], homeLane: [483, 690], home: [417, 679],
@@ -43,6 +49,7 @@ const EDGES = [
   ['south', 'southwest'], ['southwest', 'west'],
   ['north', 'northPath'], ['northPath', 'northGate'],
   ['northwest', 'innLane'], ['innLane', 'innStep'], ['innStep', 'inn'],
+  ['innStep', 'terrace'], ['terrace', 'terraceWest'], ['terrace', 'terraceEast'],
   ['northeast', 'cottageStep'], ['cottageStep', 'cottage'],
   ['south', 'southLane'], ['southLane', 'southPath'], ['southPath', 'southGate'],
   ['southPath', 'homePath'], ['homePath', 'homeTurn'], ['homeTurn', 'homeLane'], ['homeLane', 'home'],
@@ -51,6 +58,10 @@ const EDGES = [
   ['southPath', 'gardenLane'], ['gardenLane', 'garden'],
   ['north', 'meetingA'], ['meetingA', 'meetingB'], ['meetingB', 'meetingC'],
 ];
+for (let i = 0; i < 8; i++) {
+  EDGES.push([`aisle${i}`, `seat${i}`]);
+  EDGES.push([`aisle${i}`, i < 6 ? `aisle${i + 2}` : i % 2 ? 'terraceEast' : 'terraceWest']);
+}
 const ring = ['east', 'southeast', 'south', 'southwest', 'west', 'northwest', 'north', 'northeast'];
 for (let i = 0; i < 18; i++) {
   const point = NODES[`gather${i}`];
