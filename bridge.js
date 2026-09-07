@@ -1,5 +1,5 @@
-import { normalizeWeather } from './weather.js?v=4.3';
-import { validDate, validTimezone } from './time.js?v=4.3';
+import { normalizeWeather } from './weather.js?v=4.4';
+import { validDate, validTimezone } from './time.js?v=4.4';
 
 /** Only these plain values cross the HA boundary. No token or entity ID is needed here. */
 export function sanitizeState(value) {
@@ -39,7 +39,7 @@ export function installBridge(onState, onReset, currentWindow = window) {
   };
   const onMessage = event => { if (acceptsMessage(event, currentWindow, allowedOrigin)) apply(event.data.state); };
   currentWindow.addEventListener('message', onMessage);
-  const api = Object.freeze({ version: '4.3.0', setState: apply, reset: onReset });
+  const api = Object.freeze({ version: '4.4.0', setState: apply, reset: onReset });
   currentWindow.haVillage = api;
   currentWindow.dispatchEvent(new CustomEvent('ha-village:ready', { detail: { version: api.version } }));
   return () => { currentWindow.removeEventListener('message', onMessage); if (currentWindow.haVillage === api) delete currentWindow.haVillage; };

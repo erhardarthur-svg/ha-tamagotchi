@@ -7,12 +7,12 @@
   <meta name="description" content="Un petit village vivant au fil des heures, prêt à accueillir la météo de Home Assistant.">
   <title>Le village · Home Assistant</title>
   <link rel="preload" as="image" href="assets/village-church.webp">
-  <link rel="stylesheet" href="style.css?v=4.3">
+  <link rel="stylesheet" href="style.css?v=4.4">
 </head>
 <body>
   <main class="app-shell">
     <section class="village-card" aria-label="Le village">
-      <canvas id="village" width="1536" height="1024" role="img" aria-describedby="sceneDescription" aria-label="Village vu du dessus : grande horloge de place, maisons, potager et rivière. Des habitants et des animaux suivent les chemins.">Un village animé au fil de la journée.</canvas>
+      <canvas id="village" width="1536" height="1024" role="button" tabindex="0" aria-describedby="sceneDescription" aria-label="Village animé avec clocher, taverne, potager et rivière. Touchez un habitant pour le saluer ; au clavier, Entrée ou Espace salue le suivant.">Un village animé au fil de la journée.</canvas>
 
       <p id="sceneDescription" class="sr-only"></p>
 
@@ -31,6 +31,14 @@
           <button data-period="evening" aria-pressed="false">Soir</button>
           <button data-period="night" aria-pressed="false">Nuit</button>
         </div></fieldset>
+        <fieldset><legend>Vie quotidienne</legend><div class="debug-options">
+          <button data-hour="10">10 h · Activités</button>
+          <button data-hour="13">13 h · Déjeuner</button>
+          <button data-moment="fishing">Pêche</button>
+          <button data-moment="music">Musique</button>
+          <button data-moment="feeding">Poules</button>
+          <button data-moment="dog">Chien</button>
+        </div></fieldset>
         <fieldset><legend>Météo</legend><div class="debug-options">
           <button data-weather="sunny" aria-pressed="false">Soleil</button>
           <button data-weather="cloudy" aria-pressed="false">Nuageux</button>
@@ -45,11 +53,11 @@
           <button data-event="night">4 h 20 · Lanternes</button>
         </div></fieldset>
         <button id="autoBtn" aria-pressed="true">Auto</button>
-        <p class="debug-note">Jour règle l’heure à 13 h pour observer le déjeuner. Auto rétablit l’heure locale et la météo automatique. Sans Home Assistant, la météo est une ambiance simulée.</p>
+        <p class="debug-note">Les scènes quotidiennes se testent à 10 h au soleil. Laissez aux habitants le temps d’arriver. Auto rétablit les données automatiques. Sans Home Assistant, la météo est simulée.</p>
       </section>
     </section>
   </main>
 
-  <script type="module" src="main.js?v=4.3"></script>
+  <script type="module" src="main.js?v=4.4"></script>
 </body>
 </html>

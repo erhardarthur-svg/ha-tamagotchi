@@ -36,6 +36,14 @@ export const NODES = Object.freeze({
   workshopPath: [785, 774], workshopStep: [859, 790], workshop: [881, 763],
   eastLane: [997, 465], bridgeWest: [1185, 466], bridgeEast: [1394, 466], eastGate: [1521, 466],
   gardenLane: [570, 827], garden: [485, 867],
+  gardenWorkA: [484, 807], gardenWorkB: [484, 754],
+  feeding: [300, 889], feedingLane: [470, 890],
+  benchA: [845, 570], benchB: [872, 570],
+  riverBank: [1155, 528], fishing: [1167, 549],
+  musicSpot: [789, 369], listenerA: [812, 391], listenerB: [789, 407],
+  smithA: [875, 785], smithB: [903, 785],
+  wellA: [620, 444], wellB: [617, 476],
+  chatA: [589, 390], chatB: [614, 390],
   meetingA: [719, 355], meetingB: [742, 357], meetingC: [760, 367],
   ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => {
     const a = i / 18 * Math.PI * 2;
@@ -56,6 +64,14 @@ const EDGES = [
   ['southLane', 'workshopPath'], ['workshopPath', 'workshopStep'], ['workshopStep', 'workshop'],
   ['east', 'eastLane'], ['eastLane', 'bridgeWest'], ['bridgeWest', 'bridgeEast'], ['bridgeEast', 'eastGate'],
   ['southPath', 'gardenLane'], ['gardenLane', 'garden'],
+  ['garden', 'gardenWorkA'], ['gardenWorkA', 'gardenWorkB'],
+  ['garden', 'feedingLane'], ['feedingLane', 'feeding'],
+  ['southeast', 'benchA'], ['benchA', 'benchB'],
+  ['bridgeWest', 'riverBank'], ['riverBank', 'fishing'],
+  ['northeast', 'musicSpot'], ['musicSpot', 'listenerA'], ['listenerA', 'listenerB'],
+  ['workshopStep', 'smithA'], ['smithA', 'smithB'],
+  ['west', 'wellA'], ['wellA', 'wellB'],
+  ['northwest', 'chatA'], ['chatA', 'chatB'],
   ['north', 'meetingA'], ['meetingA', 'meetingB'], ['meetingB', 'meetingC'],
 ];
 for (let i = 0; i < 8; i++) {
@@ -72,8 +88,8 @@ export const GRAPH = Object.fromEntries(Object.keys(NODES).map(id => [id, []]));
 for (const [a, b] of EDGES) { GRAPH[a].push(b); GRAPH[b].push(a); }
 export function distance(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
 
-/** Dijkstra on 34 nodes; returns waypoints after `from`, including the destination. */
-export function findRoute(from, to) {
+/** Dijkstra on the small footpath graph, with optional soft congestion costs. */
+export function findRoute(from, to, occupancy = {}) {
   if (!NODES[from] || !NODES[to] || from === to) return [];
   const costs = { [from]: 0 }, previous = {}, open = new Set([from]);
   while (open.size) {
@@ -85,7 +101,7 @@ export function findRoute(from, to) {
       return path;
     }
     for (const next of GRAPH[current]) {
-      const cost = costs[current] + distance(NODES[current], NODES[next]);
+      const cost = costs[current] + distance(NODES[current], NODES[next]) + (occupancy[next] || 0) * 9;
       if (cost < (costs[next] ?? Infinity)) { costs[next] = cost; previous[next] = current; open.add(next); }
     }
   }

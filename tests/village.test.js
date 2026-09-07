@@ -6,7 +6,8 @@ import { VillageWeather, WeatherEffects, simulatedWeather, normalizeWeather } fr
 import { NODES, GRAPH, SOLID_AREAS, FOUNTAIN, findRoute } from '../world.js';
 import { handAngles } from '../church-clock.js';
 import { APPOINTMENTS, VillageAppointments } from '../events.js';
-import { dailyPlan } from '../routines.js';
+import { dailyPlan, ACTIVITY_SPOTS } from '../routines.js';
+import { walkable } from '../navigation.js';
 import { VillageLife } from '../entities.js';
 import { sanitizeState, acceptsMessage } from '../bridge.js';
 
@@ -192,4 +193,33 @@ test('conversations require two nearby idle residents, not a lone walker', () =>
   life.startConversation();
   assert.equal(a.activity, 'chat'); assert.equal(b.activity, 'chat');
   assert.equal(a.facing, 'right'); assert.equal(b.facing, 'left');
+});
+
+test('activity rounds reserve distinct spots and keep rendered positions outside solid geometry', () => {
+  const life = new VillageLife();
+  const observed = new Set();
+  assert.equal(new Set(life.residents.map(v => `${v.x},${v.y}`)).size, 24);
+  for (let i = 0; i < 12000; i++) {
+    life.update(1 / 30);
+    for (const v of life.residents) {
+      if (v.hidden) continue;
+      assert.ok(walkable(v.x + v.offsetX, v.y + v.offsetY), `${v.name} enters solid geometry`);
+      if (!v.route.length) observed.add(v.activity);
+    }
+    if (i % 30 === 0) {
+      const destinations = life.residents.filter(v => !v.hidden && ACTIVITY_SPOTS[v.destination]).map(v => v.destination);
+      assert.equal(new Set(destinations).size, destinations.length, 'activity reservation conflict');
+    }
+  }
+  for (const icon of ['fish', 'book', 'music', 'water', 'grain', 'tools', 'broom', 'parcel']) assert.ok(observed.has(icon), `${icon} never happened`);
+});
+
+test('specific debug hours remain independent from HA and Auto restores the running clock', () => {
+  let now = Date.parse('2026-09-07T16:32:00Z'); const clock = new VillageClock(() => now);
+  clock.setExternal({ timeZone: 'UTC' }); const weather = new VillageWeather();
+  const initial = weather.read(clock.read());
+  assert.equal(clock.forceTime(10), true); assert.equal(clock.read().clock, '10:00');
+  assert.equal(clock.forceTime(25), false); assert.equal(clock.read().clock, '10:00');
+  assert.deepEqual(weather.read(clock.read()), initial);
+  now += 60000; clock.force(null); assert.equal(clock.read().clock, '16:33');
 });

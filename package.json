@@ -1,6 +1,6 @@
 {
   "name": "ha-tamagotchi",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "private": true,
   "type": "module",
   "description": "Village vivant pour Home Assistant, sans dépendance ni compilation.",

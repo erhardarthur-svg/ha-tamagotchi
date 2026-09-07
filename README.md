@@ -1,4 +1,16 @@
-# HA Village — V4.3
+# HA Village — V4.4
+
+## Une journée plus vivante
+
+Les 24 habitants ont des rôles et des tournées : jardiniers (arrosage, récolte, graines pour les poules), artisans, livreurs (chargement à l’atelier puis livraison), pêcheurs, musiciens, lecteurs, entretien de la place, deux enfants et trois veilleurs. Des places dédiées sont réservées pendant le trajet et l’activité, pour éviter que plusieurs personnages utilisent le même banc ou poste de travail. Les routines respectent les repas, la mise à l’abri et les rendez-vous du clocher.
+
+La pêche, la lecture, l’arrosage, la musique, le balayage, les repas et l’artisanat possèdent de petits gestes et accessoires animés. Des auditeurs proches peuvent rejoindre un musicien ; le chien accompagne parfois un voisin ; les poules se rapprochent des graines ; le chat se recroqueville pendant ses longues pauses. Les enfants sont plus petits et marchent plus vite. Aucun son automatique.
+
+La marche conserve des chemins sûrs, ralentit dans les virages et à l’arrivée, utilise un décalage latéral progressif, et prend en compte l’encombrement. Le freinage de groupe est borné et les positions rendues sont vérifiées contre bâtiments, fontaine et rivière. Ce n’est pas un moteur physique de collisions entre tous les sprites : de brefs croisements restent possibles aux intersections.
+
+Toucher un habitant affiche son nom et une bulle de salut. Au clavier, Entrée ou Espace sur le village salue successivement les habitants visibles. Les bulles d’activité sont un peu plus grandes, espacées, décalées dans le temps et limitées à cinq simultanément.
+
+Dans `?debug=1`, **10 h · Activités** permet d’observer les métiers, **13 h · Déjeuner** les repas. Les boutons Pêche, Musique, Poules et Chien placent la scène à 10 h au soleil et lancent un trajet naturel vers l’activité, sans téléportation. **Auto** restaure l’heure et la météo automatiques. La vue normale ne comporte toujours aucun panneau de commandes.
 
 Les parapluies sont supprimés. Les habitants accélèrent au départ, ralentissent à destination, gardent une distance de suivi et se décalent à droite pour se croiser. Les pauses correspondent à une activité, plutôt qu’à un changement de destination permanent.
 
@@ -97,6 +109,9 @@ Les conditions moins courantes sont regroupées dans les six ambiances demandée
 | `scene.js` | Décor en cache, lumière, eau, fenêtres, lanternes, fumée |
 | `church-clock.js` | Aiguilles du clocher, éclairage et cloche animée |
 | `events.js` | Rendez-vous quotidiens, détection sur l’heure civile |
+| `navigation.js` | Chemins, freinage, virages, suivi et positions sûres |
+| `routines.js` | Tournées, postes d’activité et pictogrammes |
+| `activity-effects.js` | Accessoires et gestes des activités |
 | `world.js` | Coordonnées du décor, chemins, points d’intérêt |
 | `entities.js` | Habitants, chien, chat, poules, trajets et événements |
 | `time.js` | Horloge locale ou externe, fuseau, quatre périodes |

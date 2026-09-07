@@ -1,9 +1,9 @@
-import { VillageClock } from './time.js?v=4.3';
-import { VillageWeather } from './weather.js?v=4.3';
-import { VillageScene } from './scene.js?v=4.3';
-import { VillageUI } from './ui.js?v=4.3';
-import { installBridge } from './bridge.js?v=4.3';
-import { APPOINTMENTS } from './events.js?v=4.3';
+import { VillageClock } from './time.js?v=4.4';
+import { VillageWeather } from './weather.js?v=4.4';
+import { VillageScene } from './scene.js?v=4.4';
+import { VillageUI } from './ui.js?v=4.4';
+import { installBridge } from './bridge.js?v=4.4';
+import { APPOINTMENTS } from './events.js?v=4.4';
 
 const clock = new VillageClock(), weather = new VillageWeather();
 let scene, lastUI = 0, externalWeatherAt = null, previewEvent = null;
@@ -27,6 +27,12 @@ function refresh() {
 const ui = new VillageUI({
   onPeriod: period => { previewEvent = null; scene?.life.endAppointment(); clock.force(period); refresh(); },
   onWeather: kind => { weather.force(kind); refresh(); },
+  onHour: hour => { previewEvent = null; scene?.life.endAppointment(); clock.forceTime(hour); refresh(); },
+  onMoment: kind => {
+    if (!scene) return;
+    previewEvent = null; scene.life.endAppointment(); clock.forceTime(10); weather.force('sunny'); refresh();
+    scene.life.triggerMoment(kind); refresh();
+  },
   onAuto: () => { previewEvent = null; scene?.life.endAppointment(); clock.force(null); weather.force(null); refresh(); },
   onEvent: id => {
     const event = APPOINTMENTS.find(e => e.id === id);
@@ -40,7 +46,7 @@ const removeBridge = installBridge(state => {
   if ('weather' in state) { weather.setExternal(state.weather); externalWeatherAt = Date.now(); }
   refresh();
 }, () => {
-  clock.resetExternal(); clock.force(null); weather.setExternal(null); weather.force(null); externalWeatherAt = null; refresh();
+  previewEvent = null; scene?.life.endAppointment(); clock.resetExternal(); clock.force(null); weather.setExternal(null); weather.force(null); externalWeatherAt = null; refresh();
 });
 refresh();
 
@@ -62,6 +68,23 @@ async function start() {
   if ('ResizeObserver' in window) { resizeObserver = new ResizeObserver(resize); resizeObserver.observe(canvas.parentElement); }
   else window.addEventListener('resize', resize);
   resize(); refresh(); ui.ready();
+  const inputEvents = new AbortController();
+  let keyboardResident = 0;
+  canvas.addEventListener('click', event => {
+    if (event.detail === 0) return;
+    const box = canvas.getBoundingClientRect();
+    const x = ((event.clientX - box.left) * canvas.width / box.width - scene.offsetX) / scene.scale;
+    const y = ((event.clientY - box.top) * canvas.height / box.height - scene.offsetY) / scene.scale;
+    const visible = scene.life.residents.filter(v => !v.hidden);
+    const nearest = visible.sort((a, b) => Math.hypot(a.x - x, a.y - 12 - y) - Math.hypot(b.x - x, b.y - 12 - y))[0];
+    if (nearest && Math.hypot(nearest.x - x, nearest.y - 12 - y) < Math.max(30, 18 * canvas.width / box.width / scene.scale)) { scene.life.greet(nearest); refresh(); }
+  }, { signal: inputEvents.signal });
+  canvas.addEventListener('keydown', event => {
+    if (!['Enter', ' '].includes(event.key)) return;
+    event.preventDefault();
+    const visible = scene.life.residents.filter(v => !v.hidden);
+    scene.life.greet(visible[keyboardResident++ % visible.length]); refresh();
+  }, { signal: inputEvents.signal });
 
   let frameId = 0, lastFrame = 0, onscreen = true, disposed = false;
   const frameInterval = () => reducedMotion ? 1000 : 1000 / 30;
@@ -93,7 +116,7 @@ async function start() {
   else motionPreference.addListener(motionChange);
   window.addEventListener('pagehide', event => {
     if (event.persisted) { cancelAnimationFrame(frameId); return; }
-    disposed = true; cancelAnimationFrame(frameId); removeBridge(); resizeObserver?.disconnect(); intersection?.disconnect();
+    disposed = true; cancelAnimationFrame(frameId); inputEvents.abort(); removeBridge(); resizeObserver?.disconnect(); intersection?.disconnect();
     document.removeEventListener('visibilitychange', syncPlayback);
     window.removeEventListener('resize', resize);
     if (motionPreference.removeEventListener) motionPreference.removeEventListener('change', motionChange);

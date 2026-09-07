@@ -19,7 +19,7 @@ export function validTimezone(value) {
 }
 export class VillageClock {
   constructor(now = () => Date.now()) {
-    this.now = now; this.offset = 0; this.timeZone = undefined; this.forcedPeriod = null;
+    this.now = now; this.offset = 0; this.timeZone = undefined; this.forcedPeriod = null; this.forcedTime = null;
     this.setFormatters();
   }
   setFormatters() {
@@ -33,12 +33,16 @@ export class VillageClock {
     if (validTimezone(timeZone)) { this.timeZone = timeZone; this.setFormatters(); }
   }
   resetExternal() { this.offset = 0; this.timeZone = undefined; this.setFormatters(); }
-  force(period) { this.forcedPeriod = Object.prototype.hasOwnProperty.call(PERIODS, period) ? period : null; }
+  force(period) { this.forcedTime = null; this.forcedPeriod = Object.prototype.hasOwnProperty.call(PERIODS, period) ? period : null; }
+  forceTime(hour, minute = 0) {
+    if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !Number.isInteger(minute) || minute < 0 || minute > 59) return false;
+    this.forcedTime = { hour, minute }; this.forcedPeriod = periodForHour(hour); return true;
+  }
   read() {
     const date = new Date(this.now() + this.offset);
     const parts = Object.fromEntries(this.partsFormatter.formatToParts(date).map(p => [p.type, p.value]));
-    const hour = this.forcedPeriod ? PREVIEW_HOURS[this.forcedPeriod] : Number(parts.hour);
-    const minute = this.forcedPeriod ? 0 : Number(parts.minute);
+    const hour = this.forcedTime?.hour ?? (this.forcedPeriod ? PREVIEW_HOURS[this.forcedPeriod] : Number(parts.hour));
+    const minute = this.forcedTime?.minute ?? (this.forcedPeriod ? 0 : Number(parts.minute));
     return {
       date, hour, minute, localHour: Number(parts.hour), month: Number(parts.month), dayKey: `${parts.year}-${parts.month}-${parts.day}`,
       period: this.forcedPeriod || periodForHour(hour),

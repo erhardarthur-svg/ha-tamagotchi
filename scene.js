@@ -1,8 +1,8 @@
-import { WORLD, CHIMNEYS, LANTERNS, WINDOWS } from './world.js?v=4.3';
-import { WeatherEffects, seededRandom } from './weather.js?v=4.3';
-import { VillageLife } from './entities.js?v=4.3';
-import { drawClockTime, drawBell } from './church-clock.js?v=4.3';
-import { VillageAppointments } from './events.js?v=4.3';
+import { WORLD, CHIMNEYS, LANTERNS, WINDOWS } from './world.js?v=4.4';
+import { WeatherEffects, seededRandom } from './weather.js?v=4.4';
+import { VillageLife } from './entities.js?v=4.4';
+import { drawClockTime, drawBell } from './church-clock.js?v=4.4';
+import { VillageAppointments } from './events.js?v=4.4';
 
 const DARKNESS = { morning: .03, day: 0, evening: .3, night: .85 };
 const RIVER_GLINTS = [[1242, 34], [1270, 69], [1300, 99], [1363, 262], [1414, 316], [1300, 358], [1300, 540], [1349, 576], [1390, 609], [1290, 650], [1377, 720], [1431, 800], [1368, 935], [1360, 988]];
