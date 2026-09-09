@@ -1,3 +1,5 @@
+import { FOUNTAIN, SOLID_AREAS } from './world.js?v=4.5';
+
 export const WEATHER_LABELS = Object.freeze({ sunny: 'Ensoleillé', cloudy: 'Nuageux', rainy: 'Pluie', stormy: 'Orage', snowy: 'Neige', foggy: 'Brouillard' });
 const HA_CONDITIONS = Object.freeze({
   sunny: 'sunny', 'clear-night': 'sunny', cloudy: 'cloudy', partlycloudy: 'cloudy',
@@ -77,8 +79,8 @@ export class WeatherEffects {
       ctx.stroke();
       for (let i = 0; i < 16; i++) {
         const phase = ((reducedMotion ? .6 : age * .85) + i * .371) % 1;
-        const x = 515 + (i * 61 % 430), y = 355 + (i * 47 % 210);
-        if (Math.hypot(x - 710, y - 442) < 80) continue;
+        const x = 515 + (i * 61 % 540), y = 355 + (i * 47 % 220);
+        if (Math.hypot(x - FOUNTAIN.x, y - FOUNTAIN.y) < FOUNTAIN.radius + 6 || SOLID_AREAS.some(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h)) continue;
         ctx.strokeStyle = `rgba(205,224,228,${(1 - phase) * .35})`;
         ctx.beginPath(); ctx.ellipse(x, y, 2 + phase * 7, 1 + phase * 3, 0, 0, Math.PI * 2); ctx.stroke();
       }

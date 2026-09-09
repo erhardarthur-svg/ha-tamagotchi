@@ -1,9 +1,9 @@
-import { VillageClock } from './time.js?v=4.4';
-import { VillageWeather } from './weather.js?v=4.4';
-import { VillageScene } from './scene.js?v=4.4';
-import { VillageUI } from './ui.js?v=4.4';
-import { installBridge } from './bridge.js?v=4.4';
-import { APPOINTMENTS } from './events.js?v=4.4';
+import { VillageClock } from './time.js?v=4.5';
+import { VillageWeather } from './weather.js?v=4.5';
+import { VillageScene } from './scene.js?v=4.5';
+import { VillageUI } from './ui.js?v=4.5';
+import { installBridge } from './bridge.js?v=4.5';
+import { APPOINTMENTS } from './events.js?v=4.5';
 
 const clock = new VillageClock(), weather = new VillageWeather();
 let scene, lastUI = 0, externalWeatherAt = null, previewEvent = null;
@@ -54,7 +54,7 @@ async function start() {
   const image = new Image();
   await new Promise((resolve, reject) => {
     image.onload = resolve; image.onerror = () => reject(new Error('Décor introuvable.'));
-    image.src = new URL('./assets/village-church.webp', import.meta.url).href;
+    image.src = new URL('./assets/village-center.webp', import.meta.url).href;
   });
   const canvas = document.getElementById('village');
   scene = new VillageScene(canvas, image);
@@ -69,17 +69,25 @@ async function start() {
   else window.addEventListener('resize', resize);
   resize(); refresh(); ui.ready();
   const inputEvents = new AbortController();
+  const focusClock = focused => {
+    scene.camera.setFocused(focused, reducedMotion);
+    ui.hint(focused ? 'Un autre toucher pour retrouver tout le village.' : 'La vie reprend autour du clocher…');
+    scene.draw(reducedMotion); refresh();
+  };
   let keyboardResident = 0;
   canvas.addEventListener('click', event => {
     if (event.detail === 0) return;
     const box = canvas.getBoundingClientRect();
-    const x = ((event.clientX - box.left) * canvas.width / box.width - scene.offsetX) / scene.scale;
-    const y = ((event.clientY - box.top) * canvas.height / box.height - scene.offsetY) / scene.scale;
+    const { x, y } = scene.camera.worldPoint((event.clientX - box.left) * canvas.width / box.width, (event.clientY - box.top) * canvas.height / box.height);
+    if (scene.camera.focused || scene.camera.hitsClock(x, y)) { focusClock(!scene.camera.focused); return; }
     const visible = scene.life.residents.filter(v => !v.hidden);
     const nearest = visible.sort((a, b) => Math.hypot(a.x - x, a.y - 12 - y) - Math.hypot(b.x - x, b.y - 12 - y))[0];
-    if (nearest && Math.hypot(nearest.x - x, nearest.y - 12 - y) < Math.max(30, 18 * canvas.width / box.width / scene.scale)) { scene.life.greet(nearest); refresh(); }
+    if (nearest && Math.hypot(nearest.x - x, nearest.y - 12 - y) < Math.max(30, 18 * canvas.width / box.width / scene.camera.scale)) { scene.life.greet(nearest); refresh(); }
   }, { signal: inputEvents.signal });
   canvas.addEventListener('keydown', event => {
+    if (event.key.toLowerCase() === 'h' || (event.key === 'Escape' && scene.camera.focused)) {
+      event.preventDefault(); focusClock(event.key === 'Escape' ? false : !scene.camera.focused); return;
+    }
     if (!['Enter', ' '].includes(event.key)) return;
     event.preventDefault();
     const visible = scene.life.residents.filter(v => !v.hidden);

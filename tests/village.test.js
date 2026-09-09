@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { VillageClock, periodForHour } from '../time.js';
 import { VillageWeather, WeatherEffects, simulatedWeather, normalizeWeather } from '../weather.js';
-import { NODES, GRAPH, SOLID_AREAS, FOUNTAIN, findRoute } from '../world.js';
+import { NODES, GRAPH, SOLID_AREAS, FOUNTAIN, CHURCH, WORLD, findRoute } from '../world.js';
+import { VillageCamera } from '../camera.js';
 import { handAngles } from '../church-clock.js';
 import { APPOINTMENTS, VillageAppointments } from '../events.js';
 import { dailyPlan, ACTIVITY_SPOTS } from '../routines.js';
@@ -123,7 +124,7 @@ test('entrypoint is self-contained; debug is hidden by default and artwork is un
   assert.equal(/class="topbar"|id="weatherLabel"|id="clock"/.test(html), false);
   assert.equal(/https?:\/\//.test(html), false);
   for (const match of html.matchAll(/(?:src|href)="([^"?]+)(?:\?[^"]*)?"/g)) await stat(new URL(`../${match[1]}`, import.meta.url));
-  assert.ok((await stat(new URL('../assets/village-church.webp', import.meta.url))).size < 1000000);
+  assert.ok((await stat(new URL('../assets/village-center.webp', import.meta.url))).size < 1000000);
 });
 
 test('church clock hands use the real minute including the hour hand offset', () => {
@@ -131,6 +132,30 @@ test('church clock hands use the real minute including the hour hand offset', ()
   assert.ok(Math.abs(handAngles(15, 30).minute - Math.PI) < 1e-12);
   assert.equal(handAngles(15, 30).hour, 3.5 * Math.PI / 6);
   assert.deepEqual(handAngles(12, 0), handAngles(0, 0));
+});
+
+test('church focus keeps touch coordinates aligned, fills every tile size, and returns to the full view', () => {
+  const camera = new VillageCamera();
+  for (const [width, height] of [[390, 293], [840, 360], [360, 640], [375, 200]]) {
+    camera.setFocused(false, true); camera.resize(width, height);
+    const full = { scale: camera.scale, x: camera.offsetX, y: camera.offsetY };
+    camera.setFocused(true);
+    for (let i = 0; i < 45; i++) {
+      camera.update(1 / 30);
+      assert.ok(camera.offsetX <= 0 && camera.offsetY <= 0);
+      assert.ok(camera.offsetX + WORLD.width * camera.scale >= width - 1e-9);
+      assert.ok(camera.offsetY + WORLD.height * camera.scale >= height - 1e-9);
+      const screenX = CHURCH.clock.x * camera.scale + camera.offsetX;
+      const screenY = CHURCH.clock.y * camera.scale + camera.offsetY;
+      const point = camera.worldPoint(screenX, screenY);
+      assert.ok(Math.hypot(point.x - CHURCH.clock.x, point.y - CHURCH.clock.y) < 1e-9);
+      assert.ok(camera.hitsClock(point.x, point.y));
+    }
+    assert.ok(camera.scale > full.scale * 2.4);
+    assert.ok(!camera.hitsClock(...NODES.inn));
+    camera.setFocused(false); camera.update(1 / 30, true);
+    assert.deepEqual({ scale: camera.scale, x: camera.offsetX, y: camera.offsetY }, full);
+  }
 });
 
 test('appointments trigger only at their civil minute, once daily, independently of debug', () => {

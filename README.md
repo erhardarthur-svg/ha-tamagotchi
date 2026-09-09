@@ -1,4 +1,12 @@
-# HA Village — V4.4
+# HA Village — V4.5
+
+## Le clocher au cœur du village
+
+L’église occupe désormais le centre du village. Son cadran est presque deux fois plus grand que dans la V4.4 ; les aiguilles contrastées restent sombres sur une face éclairée la nuit. Une plaque encadrée de laiton sous le cadran affiche l’heure exacte en **HH:MM**, synchronisée avec la même horloge et les mêmes forçages que les aiguilles.
+
+Sur téléphone, toucher le clocher rapproche doucement la vue ; un second toucher revient au village entier. Au clavier : **H** pour rapprocher ou revenir, **Échap** pour revenir. La préférence de mouvements réduits rend ce changement instantané. L’heure et la météo restent sans badge flottant.
+
+La fontaine se trouve dans un petit jardin à droite de l’église. Les chemins contournent les deux monuments, y compris leurs toitures projetées. Musiciens, auditeurs, conversations et rendez-vous se retrouvent sur le parvis ; les gardiens s’arrêtent au pied du clocher. Les rassemblements de midi regardent l’église. Les ondulations, éclaboussures et lumières suivent les nouveaux emplacements.
 
 ## Une journée plus vivante
 
@@ -16,9 +24,9 @@ Les parapluies sont supprimés. Les habitants accélèrent au départ, ralentiss
 
 Entre 12 h et 14 h, trois services de huit habitants se succèdent aux tables existantes de la taverne (12 h–12 h 35, 12 h 40–13 h 15, 13 h 20–13 h 55), avec des départs échelonnés. Ils restent à leur place pour manger puis reprennent leur journée. Le rassemblement de midi reste prioritaire et se termine avant le déjeuner. Le bouton Debug « Jour » permet de voir le service de 13 h.
 
-Le jardinage et l’artisanat ont des pauses de travail plus longues ; les livraisons relient les bâtiments. Deux voisins à proximité peuvent s’arrêter, se tourner l’un vers l’autre et discuter. Des bulles monochromes indiquent repas, conversation, jardinage, outils, colis et musique ; cinq au maximum, espacées et intermittentes. Sous la pluie, le déjeuner se fait à l’intérieur de la taverne ; pendant l’orage, la mise à l’abri reste prioritaire. Aucun nouvel asset ni dépendance réseau.
+Le jardinage et l’artisanat ont des pauses de travail plus longues ; les livraisons relient les bâtiments. Deux voisins à proximité peuvent s’arrêter, se tourner l’un vers l’autre et discuter. Des bulles monochromes indiquent repas, conversation, jardinage, outils, colis et musique ; cinq au maximum, espacées et intermittentes. Sous la pluie, le déjeuner se fait à l’intérieur de la taverne ; pendant l’orage, la mise à l’abri reste prioritaire. Aucune dépendance réseau à l’exécution.
 
-Une véritable église en pierre et son clocher remplacent la maison au toit bleu. Les aiguilles de son cadran suivent l’heure du village, avec un éclairage doux la nuit. La fontaine retrouve sa place centrale. Aucun badge d’heure ou de météo ; l’heure exacte et la date restent disponibles aux lecteurs d’écran.
+Une véritable église en pierre et son clocher remplacent la maison au toit bleu. Les aiguilles de son cadran suivent l’heure du village, avec un éclairage doux la nuit. Aucun badge d’heure ou de météo ; l’heure exacte et la date restent disponibles aux lecteurs d’écran.
 
 24 habitants parcourent les chemins : livraisons, jardinage, promenades, conversations et pauses. Trois veilleurs restent dehors la nuit. Les destinations tiennent compte de leur fréquentation et chaque rassemblement dispose de places distinctes.
 
@@ -107,7 +115,8 @@ Les conditions moins courantes sont regroupées dans les six ambiances demandée
 | `index.html` / `style.css` | Surcouche, responsive, commandes discrètes |
 | `main.js` | Initialisation, boucle 30 i/s, cycle de vie, repli météo |
 | `scene.js` | Décor en cache, lumière, eau, fenêtres, lanternes, fumée |
-| `church-clock.js` | Aiguilles du clocher, éclairage et cloche animée |
+| `camera.js` | Rapprochement du clocher, cadrage et coordonnées tactiles |
+| `church-clock.js` | Aiguilles, plaque HH:MM, éclairage et cloche animée |
 | `events.js` | Rendez-vous quotidiens, détection sur l’heure civile |
 | `navigation.js` | Chemins, freinage, virages, suivi et positions sûres |
 | `routines.js` | Tournées, postes d’activité et pictogrammes |
@@ -118,20 +127,22 @@ Les conditions moins courantes sont regroupées dans les six ambiances demandée
 | `weather.js` | Six météos, simulation locale, particules, textes d’ambiance |
 | `bridge.js` | Validation des données et pont HA |
 | `ui.js` | Affichage et forçages réservés au Debug |
-| `assets/village-church.webp` | Décor original optimisé, 1536 × 1024 |
+| `assets/village-center.webp` | Décor central optimisé, 1536 × 1024, environ 507 ko |
 
 Pour modifier le plan du village, mettre à jour le décor et ses ancrages dans `world.js` ensemble. Le décor est original, généré pour ce projet ; aucun asset de RimWorld n’a été utilisé. Les personnages sont des sprites dessinés en code, avec couleurs, silhouettes, pas et orientations distincts.
 
+Le décor V4.5 a été créé avec l’outil Imagegen intégré, à partir du décor V4.4. Direction de la retouche : conserver le style pixel-art, la taverne, le potager, l’atelier et la rivière ; déplacer l’église au centre, libérer le parvis et placer la fontaine à droite ; laisser le cadran et la plaque vides pour leur rendu fonctionnel. Le PNG 1536 × 1024 a été converti en WebP qualité 86. Les ancrages mesurés et les textes fonctionnels sont définis dans le code.
+
 ## Animations et performance
 
-- Six habitants suivent un graphe de chemins. Ils contournent l’horloge et traversent la rivière uniquement par le pont. Un changement d’heure ou de météo termine d’abord le segment en cours, sans téléportation.
-- La nuit, cinq habitants rentrent chez eux ; un veilleur continue sa ronde avec une lanterne. Le soir et sous la pluie, l’activité ralentit. Les orages poussent les habitants à se mettre à l’abri.
+- Les 24 habitants suivent un graphe de chemins. Ils contournent l’église et la fontaine et traversent la rivière uniquement par le pont. Un changement d’heure ou de météo termine d’abord le segment en cours, sans téléportation.
+- La nuit, 21 habitants rentrent chez eux ; trois veilleurs continuent leur ronde. Le soir et sous la pluie, l’activité ralentit. Les orages poussent les habitants à se mettre à l’abri.
 - Un chien et un chat suivent les allées ; trois poules picorent et se déplacent près du potager. Événements espacés, vitesses bornées, petits groupes près de l’horloge.
 - Quatre périodes : matin 6–10 h, jour 10–18 h, soir 18–22 h, nuit 22–6 h. Transitions fondues de 1,4 seconde. Ce sont des horaires fixes, pas un calcul astronomique du soleil.
 - Une seule image locale, sans dépendances de production. Terrain et pierre de l’horloge précomposés lors des changements d’ambiance ; maximum de 135 particules et de 1,8 million de pixels de rendu, DPR plafonné à 1,5.
 - Le dessin est limité à 30 images/s ; aucun calcul météo réseau. Mise en pause quand l’onglet est masqué ou la tuile hors écran. Reprise avec un pas de simulation borné.
 - La préférence système **Réduire les animations** fige les déplacements, flocons, fumée et eau, supprime les éclairs et conserve l’actualisation de l’horloge et de l’ambiance.
-- Texte français, commandes tactiles de 44 px, états `aria-pressed`, fermeture par Échap, information météo visible sans interpréter le dessin.
+- Texte français, commandes Debug tactiles de 44 px, états `aria-pressed`, fermeture par Échap, description de l’heure et de la météo pour les lecteurs d’écran.
 
 ## Vérification
 

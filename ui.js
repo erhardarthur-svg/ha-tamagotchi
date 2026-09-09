@@ -1,5 +1,5 @@
-import { PERIODS } from './time.js?v=4.4';
-import { WEATHER_LABELS, ambienceMessage } from './weather.js?v=4.4';
+import { PERIODS } from './time.js?v=4.5';
+import { WEATHER_LABELS, ambienceMessage } from './weather.js?v=4.5';
 
 export class VillageUI {
   constructor({ onPeriod, onWeather, onAuto, onEvent, onHour, onMoment }, root = document) {
@@ -22,13 +22,14 @@ export class VillageUI {
     root.querySelectorAll('[data-moment]').forEach(button => button.addEventListener('click', () => onMoment(button.dataset.moment)));
   }
   text(id, value) { if (this.last[id] !== value) { this.nodes[id].textContent = value; this.last[id] = value; } }
+  hint(text) { this.hintText = text; this.hintUntil = Date.now() + 5000; }
   update(time, weather, life, forcedPeriod, forcedWeather) {
     const label = weather.kind === 'sunny' && time.period === 'night' ? 'Ciel dégagé' : WEATHER_LABELS[weather.kind];
     const source = { simulation: 'Météo simulée.', test: 'Météo de test.', ha: 'Météo Home Assistant.' }[weather.source];
     // Accessible text only: the visible weather badge and clock overlay are gone.
     this.text('sceneDescription', `${time.clock}, ${time.shortDate}. ${PERIODS[time.period]}. ${label}. ${source}`);
     // Weather is expressed visually, including in normal mode's ambient message.
-    this.text('eventText', life?.event?.text || (time.hour >= 12 && time.hour < 14 ? 'À la taverne, les services du déjeuner se succèdent…' : ambienceMessage({ period: time.period, weather: 'sunny' })));
+    this.text('eventText', (Date.now() < this.hintUntil && this.hintText) || life?.event?.text || (time.hour >= 12 && time.hour < 14 ? 'À la taverne, les services du déjeuner se succèdent…' : ambienceMessage({ period: time.period, weather: 'sunny' })));
     if (this.debug) {
       this.root.querySelectorAll('[data-period]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.period === forcedPeriod)));
       this.root.querySelectorAll('[data-weather]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.weather === forcedWeather)));

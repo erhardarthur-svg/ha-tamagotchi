@@ -1,8 +1,8 @@
-import { NODES } from './world.js?v=4.4';
-import { routeTo, walk } from './navigation.js?v=4.4';
-import { drawActivity } from './activity-effects.js?v=4.4';
-import { seededRandom } from './weather.js?v=4.4';
-import { dailyPlan, drawActivityBubble, activityRound, activityAt, ACTIVITY_SPOTS } from './routines.js?v=4.4';
+import { NODES, SQUARE } from './world.js?v=4.5';
+import { routeTo, walk } from './navigation.js?v=4.5';
+import { drawActivity } from './activity-effects.js?v=4.5';
+import { seededRandom } from './weather.js?v=4.5';
+import { dailyPlan, drawActivityBubble, activityRound, activityAt, ACTIVITY_SPOTS } from './routines.js?v=4.5';
 
 const DESTINATIONS = ['west', 'northwest', 'north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'garden', 'inn', 'cottage', 'workshop', 'bridgeEast'];
 const STARTS = [...DESTINATIONS, 'chatA', 'chatB', 'riverBank', 'benchB', 'wellA', 'gardenWorkA', 'feedingLane', 'northPath', 'southLane', 'westPath', 'workshopStep'];
@@ -127,7 +127,7 @@ export class VillageLife {
       v.moving = false;
       v.offsetX *= Math.max(0, 1 - dt * 5); v.offsetY *= Math.max(0, 1 - dt * 5);
       if (this.scheduled && v.id < this.scheduled.count) {
-        v.facing = v.x < 711 ? 'right' : 'left';
+        v.facing = this.scheduled.id === 'noon' ? 'up' : v.x < SQUARE.x ? 'right' : 'left';
         if (this.scheduled.id === 'night' && this.age - this.scheduled.started > 55 && v.destination.startsWith('gather')) routeTo(v, 'bridgeWest');
         continue;
       }

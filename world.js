@@ -1,6 +1,15 @@
 /** All coordinates refer to the 1536 × 1024 background. Keep art and map together. */
 export const WORLD = Object.freeze({ width: 1536, height: 1024 });
-export const FOUNTAIN = Object.freeze({ x: 711, y: 443, radius: 68 });
+export const FOUNTAIN = Object.freeze({ x: 943, y: 289, radius: 75 });
+// Art landmarks are shared by rendering and navigation; keep them in one place.
+export const CHURCH = Object.freeze({
+  clock: { x: 763.5, y: 352, radius: 34 },
+  bell: { x: 752, y: 273, w: 24, h: 30 },
+  plaque: { x: 706, y: 391, w: 115, h: 37 },
+  doorway: { x: 698, y: 493 },
+  hitArea: { x: 683, y: 247, w: 161, h: 202 },
+});
+export const SQUARE = Object.freeze({ x: 710, y: 544 });
 export const CHIMNEYS = [[462, 103], [394, 548], [944, 613]];
 export const LANTERNS = [
   { x: 488, y: 364, ground: 400 }, { x: 928, y: 509, ground: 539 },
@@ -13,16 +22,19 @@ export const WINDOWS = [
   { x: 497, y: 277, w: 10, h: 13 }, { x: 527, y: 276, w: 11, h: 13 },
   { x: 349, y: 649, w: 10, h: 10 }, { x: 453, y: 648, w: 9, h: 12 },
   { x: 958, y: 718, w: 8, h: 11 }, { x: 122, y: 750, w: 7, h: 10 },
+  { x: 621, y: 411, w: 8, h: 14 }, { x: 657, y: 417, w: 7, h: 18 },
+  { x: 698, y: 366, w: 6, h: 13 },
 ];
 
 // A small explicit navigation graph is cheaper and more reliable than free roaming.
-// The fountain is surrounded by a ring. The only river crossing is the bridge.
+// Paths wrap around the church and fountain. The only river crossing is the bridge.
 export const NODES = Object.freeze({
   westGate: [12, 467], westPath: [226, 465], westLane: [431, 462],
-  west: [561, 448], northwest: [594, 354], north: [703, 335],
-  northeast: [811, 350], east: [833, 447], southeast: [793, 527],
-  south: [706, 564], southwest: [595, 536],
-  northPath: [683, 231], northGate: [676, 16],
+  west: [544, 463], northwest: [580, 322], churchWestBack: [583, 249], north: [688, 236],
+  churchNorthwest: [704, 196], churchNorth: [705, 125], churchBackEast: [839, 125], churchNortheast: [839, 187],
+  northeast: [838, 307], east: [870, 462], southeast: [820, 512],
+  south: [708, 574], southwest: [568, 512],
+  northPath: [683, 169], northGate: [676, 16],
   innLane: [488, 349], innStep: [407, 334], inn: [407, 312],
   terrace: [278, 345], terraceWest: [216, 345], terraceEast: [279, 345],
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => {
@@ -30,7 +42,9 @@ export const NODES = Object.freeze({
     return [`seat${i}`, [i % 2 ? 270 : 232, y]];
   })),
   ...Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`aisle${i}`, [i % 2 ? 279 : 216, [239, 262, 300, 323][Math.floor(i / 2)]]])),
-  cottageStep: [875, 324], cottage: [874, 305],
+  churchStep: [698, 513], church: [698, 497],
+  cottageStep: [875, 202], cottage: [917, 192],
+  fountainEast: [1036, 289], fountainSoutheast: [1037, 389], fountainSouth: [948, 389], fountainNorth: [978, 191],
   southLane: [685, 686], southPath: [686, 799], southGate: [674, 1008],
   homePath: [582, 783], homeTurn: [514, 737], homeLane: [483, 690], home: [417, 679],
   workshopPath: [785, 774], workshopStep: [859, 790], workshop: [881, 763],
@@ -40,25 +54,29 @@ export const NODES = Object.freeze({
   feeding: [300, 889], feedingLane: [470, 890],
   benchA: [845, 570], benchB: [872, 570],
   riverBank: [1155, 528], fishing: [1167, 549],
-  musicSpot: [789, 369], listenerA: [812, 391], listenerB: [789, 407],
+  musicSpot: [771, 516], listenerA: [790, 544], listenerB: [763, 550],
   smithA: [875, 785], smithB: [903, 785],
-  wellA: [620, 444], wellB: [617, 476],
-  chatA: [589, 390], chatB: [614, 390],
-  meetingA: [719, 355], meetingB: [742, 357], meetingC: [760, 367],
+  wellA: [849, 301], wellB: [909, 389],
+  chatA: [575, 573], chatB: [601, 573],
+  meetingA: [652, 535], meetingB: [679, 535], meetingC: [706, 535],
   ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => {
-    const a = i / 18 * Math.PI * 2;
-    return [`gather${i}`, [711 + Math.cos(a) * 115, 443 + Math.sin(a) * 100]];
+    const row = Math.floor(i / 6), column = i % 6;
+    return [`gather${i}`, [618 + column * 35 + (row % 2) * 7, 519 + row * 23]];
   })),
 });
 const EDGES = [
   ['westGate', 'westPath'], ['westPath', 'westLane'], ['westLane', 'west'],
-  ['west', 'northwest'], ['northwest', 'north'], ['north', 'northeast'],
+  ['west', 'northwest'], ['northwest', 'churchWestBack'], ['churchWestBack', 'north'], ['north', 'churchNorthwest'],
+  ['churchNorthwest', 'churchNorth'], ['churchNorth', 'churchBackEast'], ['churchBackEast', 'churchNortheast'], ['churchNortheast', 'northeast'],
   ['northeast', 'east'], ['east', 'southeast'], ['southeast', 'south'],
   ['south', 'southwest'], ['southwest', 'west'],
   ['north', 'northPath'], ['northPath', 'northGate'],
   ['northwest', 'innLane'], ['innLane', 'innStep'], ['innStep', 'inn'],
   ['innStep', 'terrace'], ['terrace', 'terraceWest'], ['terrace', 'terraceEast'],
-  ['northeast', 'cottageStep'], ['cottageStep', 'cottage'],
+  ['churchNortheast', 'cottageStep'], ['cottageStep', 'cottage'],
+  ['cottage', 'fountainNorth'], ['fountainNorth', 'fountainEast'],
+  ['fountainEast', 'fountainSoutheast'], ['fountainSoutheast', 'fountainSouth'], ['fountainSouth', 'east'],
+  ['south', 'churchStep'], ['churchStep', 'church'],
   ['south', 'southLane'], ['southLane', 'southPath'], ['southPath', 'southGate'],
   ['southPath', 'homePath'], ['homePath', 'homeTurn'], ['homeTurn', 'homeLane'], ['homeLane', 'home'],
   ['southLane', 'workshopPath'], ['workshopPath', 'workshopStep'], ['workshopStep', 'workshop'],
@@ -68,17 +86,17 @@ const EDGES = [
   ['garden', 'feedingLane'], ['feedingLane', 'feeding'],
   ['southeast', 'benchA'], ['benchA', 'benchB'],
   ['bridgeWest', 'riverBank'], ['riverBank', 'fishing'],
-  ['northeast', 'musicSpot'], ['musicSpot', 'listenerA'], ['listenerA', 'listenerB'],
+  ['southeast', 'musicSpot'], ['musicSpot', 'listenerA'], ['listenerA', 'listenerB'],
   ['workshopStep', 'smithA'], ['smithA', 'smithB'],
-  ['west', 'wellA'], ['wellA', 'wellB'],
-  ['northwest', 'chatA'], ['chatA', 'chatB'],
-  ['north', 'meetingA'], ['meetingA', 'meetingB'], ['meetingB', 'meetingC'],
+  ['northeast', 'wellA'], ['fountainSouth', 'wellB'],
+  ['southwest', 'chatA'], ['chatA', 'chatB'], ['chatB', 'south'],
+  ['churchStep', 'meetingA'], ['meetingA', 'meetingB'], ['meetingB', 'meetingC'],
 ];
 for (let i = 0; i < 8; i++) {
   EDGES.push([`aisle${i}`, `seat${i}`]);
   EDGES.push([`aisle${i}`, i < 6 ? `aisle${i + 2}` : i % 2 ? 'terraceEast' : 'terraceWest']);
 }
-const ring = ['east', 'southeast', 'south', 'southwest', 'west', 'northwest', 'north', 'northeast'];
+const ring = ['southeast', 'south', 'southwest', 'churchStep'];
 for (let i = 0; i < 18; i++) {
   const point = NODES[`gather${i}`];
   const anchor = ring.reduce((a, b) => distance(NODES[a], point) < distance(NODES[b], point) ? a : b);
@@ -110,7 +128,9 @@ export function findRoute(from, to, occupancy = {}) {
 
 // Safety geometry also makes regression tests independent of graph construction.
 export const SOLID_AREAS = [
-  { x: 285, y: 85, w: 286, h: 217 }, { x: 782, y: 7, w: 185, h: 295 },
+  { x: 285, y: 85, w: 286, h: 217 },
+  // Projected roofs are solid too: sprites never walk over the church artwork.
+  { x: 594, y: 267, w: 218, h: 229 }, { x: 721, y: 151, w: 91, h: 116 },
   { x: 307, y: 517, w: 174, h: 156 }, { x: 795, y: 582, w: 213, h: 175 },
   { x: 94, y: 691, w: 84, h: 103 },
 ];

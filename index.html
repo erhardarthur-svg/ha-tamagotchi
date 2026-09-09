@@ -6,13 +6,13 @@
   <meta name="theme-color" content="#19271e">
   <meta name="description" content="Un petit village vivant au fil des heures, prêt à accueillir la météo de Home Assistant.">
   <title>Le village · Home Assistant</title>
-  <link rel="preload" as="image" href="assets/village-church.webp">
-  <link rel="stylesheet" href="style.css?v=4.4">
+  <link rel="preload" as="image" href="assets/village-center.webp">
+  <link rel="stylesheet" href="style.css?v=4.5">
 </head>
 <body>
   <main class="app-shell">
     <section class="village-card" aria-label="Le village">
-      <canvas id="village" width="1536" height="1024" role="button" tabindex="0" aria-describedby="sceneDescription" aria-label="Village animé avec clocher, taverne, potager et rivière. Touchez un habitant pour le saluer ; au clavier, Entrée ou Espace salue le suivant.">Un village animé au fil de la journée.</canvas>
+      <canvas id="village" width="1536" height="1024" role="button" tabindex="0" aria-keyshortcuts="H Escape Enter Space" aria-describedby="sceneDescription" aria-label="Village animé. Touchez le clocher pour rapprocher la vue, puis touchez à nouveau pour revenir. Au clavier : H pour le clocher, Échap pour revenir, Entrée ou Espace pour saluer un habitant.">Un village animé au fil de la journée.</canvas>
 
       <p id="sceneDescription" class="sr-only"></p>
 
@@ -58,6 +58,6 @@
     </section>
   </main>
 
-  <script type="module" src="main.js?v=4.4"></script>
+  <script type="module" src="main.js?v=4.5"></script>
 </body>
 </html>

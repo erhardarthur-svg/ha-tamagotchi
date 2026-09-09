@@ -1,8 +1,9 @@
-import { WORLD, CHIMNEYS, LANTERNS, WINDOWS } from './world.js?v=4.4';
-import { WeatherEffects, seededRandom } from './weather.js?v=4.4';
-import { VillageLife } from './entities.js?v=4.4';
-import { drawClockTime, drawBell } from './church-clock.js?v=4.4';
-import { VillageAppointments } from './events.js?v=4.4';
+import { WORLD, FOUNTAIN, SOLID_AREAS, CHIMNEYS, LANTERNS, WINDOWS } from './world.js?v=4.5';
+import { WeatherEffects, seededRandom } from './weather.js?v=4.5';
+import { VillageLife } from './entities.js?v=4.5';
+import { drawClockTime, drawBell } from './church-clock.js?v=4.5';
+import { VillageAppointments } from './events.js?v=4.5';
+import { VillageCamera } from './camera.js?v=4.5';
 
 const DARKNESS = { morning: .03, day: 0, evening: .3, night: .85 };
 const RIVER_GLINTS = [[1242, 34], [1270, 69], [1300, 99], [1363, 262], [1414, 316], [1300, 358], [1300, 540], [1349, 576], [1390, 609], [1290, 650], [1377, 720], [1431, 800], [1368, 935], [1360, 988]];
@@ -16,6 +17,7 @@ export class VillageScene {
     this.canvas = canvas; this.ctx = canvas.getContext('2d', { alpha: false });
     if (!this.ctx) throw new Error('Canvas 2D indisponible.');
     this.image = image; this.makeSurface = createSurface; this.age = 0;
+    this.camera = new VillageCamera();
     this.environment = { period: 'day', weather: 'sunny' };
     this.light = 0; this.previousLight = 0; this.targetLight = 0; this.transition = 1;
     this.current = createSurface(WORLD.width, WORLD.height);
@@ -31,10 +33,7 @@ export class VillageScene {
     const dpr = Math.max(.5, Math.min(requestedDpr, 1.5, Math.sqrt(1800000 / (width * height))));
     this.canvas.width = Math.max(1, Math.round(width * dpr));
     this.canvas.height = Math.max(1, Math.round(height * dpr));
-    const w = this.canvas.width, h = this.canvas.height;
-    this.scale = Math.max(w / WORLD.width, h / WORLD.height);
-    this.offsetX = (w - WORLD.width * this.scale) / 2;
-    this.offsetY = (h - WORLD.height * this.scale) / 2;
+    this.camera.resize(this.canvas.width, this.canvas.height);
     this.ctx.imageSmoothingEnabled = true;
     this.ctx.imageSmoothingQuality = 'high';
   }
@@ -79,8 +78,12 @@ export class VillageScene {
       }
     }
     if (weather === 'rainy' || weather === 'stormy') {
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, h);
+      for (const rect of SOLID_AREAS) ctx.rect(rect.x, rect.y, rect.w, rect.h);
+      ctx.clip('evenodd');
       ctx.fillStyle = '#9eb7c31c'; ctx.beginPath();
       ctx.moveTo(493, 342); ctx.lineTo(944, 323); ctx.lineTo(963, 539); ctx.lineTo(874, 582); ctx.lineTo(589, 569); ctx.closePath(); ctx.fill();
+      ctx.restore();
     }
     if (weather === 'snowy') {
       ctx.fillStyle = period === 'night' ? '#acbfd619' : '#e8f0e624'; ctx.fillRect(0, 0, w, h);
@@ -97,6 +100,7 @@ export class VillageScene {
     ctx.fillStyle = vignette; ctx.fillRect(0, 0, w, h); ctx.restore();
   }
   update(dt, reducedMotion = false) {
+    this.camera.update(dt, reducedMotion);
     this.transition = Math.min(1, this.transition + dt / 1.4);
     const ease = this.transition * this.transition * (3 - 2 * this.transition);
     this.light = this.previousLight + (this.targetLight - this.previousLight) * ease;
@@ -106,7 +110,8 @@ export class VillageScene {
   draw(reducedMotion = false) {
     const ctx = this.ctx, { width: w, height: h } = WORLD;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#263b2a'; ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.setTransform(this.scale, 0, 0, this.scale, this.offsetX, this.offsetY);
+    const { scale, offsetX, offsetY } = this.camera;
+    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     if (this.transition < 1) {
       ctx.drawImage(this.previous, 0, 0); ctx.globalAlpha = this.transition; ctx.drawImage(this.current, 0, 0); ctx.globalAlpha = 1;
     } else ctx.drawImage(this.current, 0, 0);
@@ -126,7 +131,7 @@ export class VillageScene {
     for (let i = 0; i < 3; i++) {
       const p = (this.age * .4 + i / 3) % 1;
       ctx.strokeStyle = `rgba(203,232,212,${(1 - p) * .32})`;
-      ctx.beginPath(); ctx.ellipse(711, 449, 8 + p * 29, 4 + p * 15, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(FOUNTAIN.x, FOUNTAIN.y + 6, 8 + p * FOUNTAIN.radius * .42, 4 + p * FOUNTAIN.radius * .22, 0, 0, Math.PI * 2); ctx.stroke();
     }
     for (let i = 0; i < RIVER_GLINTS.length; i++) {
       const [x, y] = RIVER_GLINTS[i], p = (this.age * .28 + i * .27) % 1;

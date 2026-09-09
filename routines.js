@@ -28,6 +28,7 @@ export const ACTIVITY_SPOTS = Object.freeze({
   wellB: { icon: 'broom', seconds: 22, facing: 'right', text: 'Un petit coup de balai sur la place.' },
   chatA: { icon: 'rest', seconds: 15, facing: 'right' },
   chatB: { icon: 'rest', seconds: 15, facing: 'left' },
+  churchStep: { icon: 'rest', seconds: 17, facing: 'up', text: 'Le gardien s’arrête un instant au pied du clocher.' },
 });
 const WORK_ROUNDS = {
   jardinage: ['gardenWorkA', 'gardenWorkB', 'feeding', 'wellA'],
@@ -38,7 +39,7 @@ const WORK_ROUNDS = {
   entretien: ['wellB', 'feeding', 'wellA', 'chatB'],
   lecture: ['benchA', 'chatA', 'riverBank'],
   enfant: ['west', 'northwest', 'northeast', 'east', 'southeast', 'south', 'southwest'],
-  garde: ['westLane', 'north', 'bridgeWest', 'south', 'innLane'],
+  garde: ['westLane', 'churchStep', 'north', 'bridgeWest', 'south', 'innLane'],
 };
 export function activityRound(v, minute, weather) {
   if (weather === 'rainy' || weather === 'stormy') return ['inn', 'workshop', 'home'];
