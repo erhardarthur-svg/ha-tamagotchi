@@ -90,6 +90,14 @@ export function drawActivityBubble(ctx, icon, x, y, opacity = 1) {
     for (const [x, y] of [[-7, -3], [-3, -7], [3, -7], [7, -3]]) { ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fill(); }
   } else if (icon === 'heart') {
     ctx.font = '20px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('♥', 0, 6);
+  } else if (icon === 'gift') {
+    ctx.strokeRect(-9, -5, 18, 13); line([-10, -5], [-10, -9], [10, -9], [10, -5]); line([0, -9], [0, 8]);
+    line([0, -9], [-5, -13], [-8, -11], [0, -9], [5, -13], [8, -11], [0, -9]);
+  } else if (icon === 'flower') {
+    line([0, 8], [0, -1]); line([0, 5], [-6, 1]);
+    for (const [x, y] of [[0, -9], [-5, -5], [5, -5], [0, -1]]) { ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.stroke(); }
+  } else if (icon === 'star') {
+    line([0, -11], [3, -4], [10, -3], [5, 2], [6, 9], [0, 5], [-6, 9], [-5, 2], [-10, -3], [-3, -4], [0, -11]);
   } else if (icon === 'sleep') {
     ctx.font = 'bold 16px monospace'; ctx.textAlign = 'center'; ctx.fillText('z', 0, 5);
   }

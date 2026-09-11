@@ -7,7 +7,7 @@
   <meta name="description" content="Un petit village vivant au fil des heures, prêt à accueillir la météo de Home Assistant.">
   <title>Le village · Home Assistant</title>
   <link rel="preload" as="image" href="assets/village-center.webp">
-  <link rel="stylesheet" href="style.css?v=4.5">
+  <link rel="stylesheet" href="style.css?v=4.6">
 </head>
 <body>
   <main class="app-shell">
@@ -25,6 +25,17 @@
       <button id="debugToggle" class="debug-toggle" aria-controls="debugPanel" aria-expanded="false" hidden>Debug</button>
       <section id="debugPanel" class="debug-panel" aria-label="Réglages de test" hidden>
         <div class="debug-heading"><strong>Atelier du village</strong><button id="debugClose" class="close-button" aria-label="Fermer les réglages">×</button></div>
+        <fieldset class="calendar-controls"><legend>Voyager dans le calendrier</legend>
+          <div class="calendar-date-row">
+            <label for="calendarDate">Date<input id="calendarDate" type="date" min="1900-01-01" max="9999-12-31"></label>
+            <label for="calendarTime">Heure<input id="calendarTime" type="time"></label>
+          </div>
+          <label for="calendarScene">Scène à découvrir</label>
+          <select id="calendarScene"></select>
+          <div class="debug-options"><button id="calendarPlay">Voir cette scène</button><button id="calendarSurprise">Surprise</button></div>
+          <p id="calendarSummary" class="debug-note"></p>
+          <details class="calendar-agenda"><summary>Le programme de cette journée</summary><ul id="calendarAgenda"></ul></details>
+        </fieldset>
         <fieldset><legend>Heure</legend><div class="debug-options">
           <button data-period="morning" aria-pressed="false">Matin</button>
           <button data-period="day" aria-pressed="false">Jour</button>
@@ -53,11 +64,11 @@
           <button data-event="night">4 h 20 · Lanternes</button>
         </div></fieldset>
         <button id="autoBtn" aria-pressed="true">Auto</button>
-        <p class="debug-note">Les scènes quotidiennes se testent à 10 h au soleil. Laissez aux habitants le temps d’arriver. Auto rétablit les données automatiques. Sans Home Assistant, la météo est simulée.</p>
+        <p class="debug-note">Les aperçus choisissent une date, une heure et une météo adaptées. Laissez aux habitants le temps d’arriver. Auto rétablit l’heure, la date et la météo automatiques. Sans Home Assistant, la météo est simulée.</p>
       </section>
     </section>
   </main>
 
-  <script type="module" src="main.js?v=4.5"></script>
+  <script type="module" src="main.js?v=4.6"></script>
 </body>
 </html>

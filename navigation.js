@@ -1,4 +1,4 @@
-import { NODES, FOUNTAIN, SOLID_AREAS, findRoute } from './world.js?v=4.5';
+import { NODES, FOUNTAIN, SOLID_AREAS, findRoute } from './world.js?v=4.6';
 
 export function walkable(x, y, margin = 0) {
   return !SOLID_AREAS.some(r => x > r.x - margin && x < r.x + r.w + margin && y > r.y - margin && y < r.y + r.h + margin)

@@ -68,7 +68,11 @@ test('villagers come home at night, stay sheltered, and resume after dawn', () =
   assert.equal(life.residents.filter(v => v.hidden).length, 21);
   assert.equal(life.residents[0].hidden, false);
   assert.ok(life.dog.hidden && life.cat.hidden);
-  assert.equal(life.event, null);
+  assert.equal(life.scheduled, null);
+  if (life.happening) {
+    assert.equal(life.happening.night, true);
+    assert.deepEqual([...life.happening.residents].sort((a, b) => a - b), [0, 8, 16]);
+  }
   const locations = life.residents.filter(v => v.hidden).map(v => [v.x, v.y]);
   for (let i = 0; i < 900; i++) life.update(1 / 30);
   assert.deepEqual(life.residents.filter(v => v.hidden).map(v => [v.x, v.y]), locations);

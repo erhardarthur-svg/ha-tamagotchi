@@ -1,8 +1,10 @@
-import { NODES, SQUARE } from './world.js?v=4.5';
-import { routeTo, walk } from './navigation.js?v=4.5';
-import { drawActivity } from './activity-effects.js?v=4.5';
-import { seededRandom } from './weather.js?v=4.5';
-import { dailyPlan, drawActivityBubble, activityRound, activityAt, ACTIVITY_SPOTS } from './routines.js?v=4.5';
+import { NODES, SQUARE } from './world.js?v=4.6';
+import { routeTo, walk } from './navigation.js?v=4.6';
+import { drawActivity } from './activity-effects.js?v=4.6';
+import { seededRandom } from './weather.js?v=4.6';
+import { dailyPlan, drawActivityBubble, activityRound, activityAt, ACTIVITY_SPOTS } from './routines.js?v=4.6';
+import { RANDOM_SCENES, sceneAllowed } from './calendar.js?v=4.6';
+import { outingFor, EVENT_JOBS } from './happenings.js?v=4.6';
 
 const DESTINATIONS = ['west', 'northwest', 'north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'garden', 'inn', 'cottage', 'workshop', 'bridgeEast'];
 const STARTS = [...DESTINATIONS, 'chatA', 'chatB', 'riverBank', 'benchB', 'wellA', 'gardenWorkA', 'feedingLane', 'northPath', 'southLane', 'westPath', 'workshopStep'];
@@ -27,6 +29,7 @@ export class VillageLife {
     this.random = random; this.age = 0; this.period = 'day'; this.weather = 'sunny';
     this.event = null; this.nextEvent = 18; this.nextNotice = 0;
     this.scheduled = null;
+    this.happening = null; this.lastRandom = null; this.time = { hour: 10, minute: 0, period: 'day' };
     this.minute = 10 * 60; this.nextSocial = 2;
     this.residents = RESIDENTS.map((v, id) => traveller(v.start, { ...v, id, speed: (v.job === 'enfant' ? 36 : 29) + id % 7 * 1.3, wait: .3 + id % 8 * .45, taskIndex: id % 3, carrying: false, cueUntil: 0, cue: null }));
     this.dog = traveller('westLane', { kind: 'dog', speed: 40, dashUntil: 0 });
@@ -35,6 +38,7 @@ export class VillageLife {
   }
   shouldShelter(v) {
     if (this.scheduled && v.id < this.scheduled.count) return false;
+    if (this.happening && v.outing && !['rainy', 'stormy'].includes(this.weather)) return false;
     if (dailyPlan(v, this.minute).kind === 'meal' && this.weather !== 'stormy') return false;
     return (this.period === 'night' && v.id % 8 !== 0) || (this.weather === 'stormy' && v.id % 8 !== 0)
       || (this.period === 'evening' && v.id > 11) || (this.weather === 'rainy' && v.id > 13);
@@ -48,9 +52,11 @@ export class VillageLife {
     const changed = period !== this.period || weather !== this.weather;
     this.period = period; this.weather = weather;
     if (!changed && !initial) return;
-    if (!this.scheduled) this.event = null;
+    if (this.happening && (!sceneAllowed(this.happening, { ...this.time, period }, weather))) this.endHappening();
+    if (!this.scheduled && !this.happening) this.event = null;
     this.dog.friend = null;
     for (const v of this.residents) {
+      if (v.outing) continue;
       if (this.shouldShelter(v)) {
         if (initial) { [v.x, v.y] = NODES[v.home]; v.node = v.home; v.route = []; v.hidden = true; }
         else routeTo(v, v.home);
@@ -60,14 +66,16 @@ export class VillageLife {
     }
   }
   setClock(time) {
+    this.time = { ...time };
     const minute = time.hour * 60 + time.minute;
+    if (this.happening && !sceneAllowed(this.happening, time, this.weather)) this.endHappening();
     if (minute === this.minute) return;
     this.minute = minute;
     for (const v of this.residents) {
       const plan = this.plan(v);
       if (v.planKind !== plan.kind) {
         v.planKind = plan.kind; v.socialUntil = 0;
-        if (!this.scheduled && !this.shouldShelter(v)) {
+        if (!this.scheduled && !v.outing && !this.shouldShelter(v)) {
           v.hidden = false;
           routeTo(v, plan.target || this.destination(v));
           v.departureDelay = (v.id % 8) * 1.2;
@@ -89,7 +97,7 @@ export class VillageLife {
   }
   send(v, target) { routeTo(v, target, this.residents); }
   notice(text) {
-    if (!text || this.scheduled || this.age < this.nextNotice) return;
+    if (!text || this.scheduled || this.happening || this.age < this.nextNotice) return;
     this.event = { text, until: this.age + 10 }; this.nextNotice = this.age + 22;
   }
   greet(v) {
@@ -99,6 +107,7 @@ export class VillageLife {
     this.event = { text: `${v.name}, ${roles[v.job] || 'habitant'}, vous fait un signe.`, until: this.age + 7 };
   }
   startAppointment(event) {
+    this.endHappening();
     this.scheduled = { ...event, started: this.age, until: this.age + event.duration, wallUntil: Date.now() + event.duration * 1000 };
     this.event = this.scheduled;
     this.residents.forEach(v => {
@@ -115,8 +124,72 @@ export class VillageLife {
       if (!v.hidden) routeTo(v, this.shouldShelter(v) ? v.home : this.destination(v));
     }
   }
+  startHappening(event) {
+    if (this.scheduled || this.happening || !sceneAllowed(event, { ...this.time, period: this.period }, this.weather)) return false;
+    const jobs = EVENT_JOBS[event.kind] || [];
+    const watchersOnly = ['lanterns', 'stargazing'].includes(event.kind);
+    const rotation = Math.floor(this.random() * this.residents.length);
+    const pool = this.residents.filter(v => watchersOnly ? v.id % 8 === 0 : (!this.shouldShelter(v) && this.plan(v).kind !== 'meal') || event.night)
+      .sort((a, b) => {
+        const priority = v => { const index = jobs.indexOf(v.job); return index < 0 ? 10 : index; };
+        return priority(a) - priority(b) || (a.id + rotation) % 24 - (b.id + rotation) % 24;
+      });
+    const ordered = event.kind === 'story' ? [pool[0], ...pool.filter(v => v.job === 'enfant'), ...pool.slice(1)] : pool;
+    const residents = [...new Set(ordered)].filter(Boolean).slice(0, event.count);
+    if (!residents.length) return false;
+    const duration = event.duration || 165;
+    this.happening = { ...event, started: this.age, until: this.age + duration, wallUntil: Date.now() + duration * 1000, residents: residents.map(v => v.id), transferred: false };
+    this.event = this.happening;
+    residents.forEach((v, i) => {
+      v.hidden = false; v.seated = false; v.socialUntil = 0; v.costume = event.kind;
+      if (event.kind === 'exchange') v.carrying = i === 0;
+      v.outing = { steps: outingFor(event, v, i), index: 0, pending: true, acting: false };
+      v.departureDelay = i * 1.1;
+      // Finish the current segment before joining the event, exactly like weather reroutes.
+      this.advanceOuting(v);
+    });
+    return true;
+  }
+  advanceOuting(v) {
+    const outing = v.outing, task = outing?.steps[outing.index];
+    if (!task) { v.outing = null; v.seated = false; v.lantern = false; v.carrying = false; v.costume = null; v.activity = 'rest'; v.wait = 4; return; }
+    outing.acting = false; v.seated = false;
+    const reserved = ACTIVITY_SPOTS[task.node] || /^(seat|market|gardenGuest|gather|repairGuest|play|picnic|exchange|stageMusic|fishGuest)/.test(task.node);
+    const capacity = reserved ? 1 : 3;
+    if (this.residents.filter(other => other !== v && !other.hidden && other.destination === task.node).length >= capacity) {
+      outing.pending = true; v.wait = 2; if (!v.route.length) v.activity = 'rest'; return;
+    }
+    outing.pending = false; outing.acting = false; v.seated = false;
+    if (task.lantern) v.lantern = true;
+    this.send(v, task.node);
+  }
+  updateOuting(v, dt) {
+    const outing = v.outing;
+    if (outing.pending) { if ((v.wait -= dt) <= 0) this.advanceOuting(v); return; }
+    const task = outing.steps[outing.index];
+    if (!outing.acting) {
+      outing.acting = true; v.activity = task.activity; v.wait = task.seconds; v.activityStarted = this.age;
+      v.facing = task.facing || 'down'; v.seated = Boolean(task.seated);
+      if (task.carry !== undefined) v.carrying = task.carry;
+      v.cue = task.activity === 'dance' ? 'music' : task.activity; v.cueUntil = this.age + 3;
+    }
+    if ((v.wait -= dt) > 0) return;
+    outing.index++; this.advanceOuting(v);
+  }
+  endHappening() {
+    if (!this.happening) return;
+    if (this.event === this.happening) this.event = null;
+    this.happening = null; this.nextEvent = this.age + 45;
+    for (const v of this.residents) {
+      if (!v.outing) continue;
+      v.outing = null; v.seated = false; v.lantern = false; v.carrying = false; v.costume = null;
+      v.cueUntil = 0; v.departureDelay = 0;
+      this.send(v, this.shouldShelter(v) ? v.home : this.destination(v));
+    }
+  }
   update(dt) {
     this.age += dt;
+    if (this.happening && this.age > this.happening.until) this.endHappening();
     if (this.scheduled && this.age > this.scheduled.until) this.endAppointment();
     if (this.event && this.age > this.event.until) this.event = null;
     const pace = this.period === 'night' ? .58 : this.period === 'evening' ? .72 : this.period === 'morning' ? .85 : 1;
@@ -131,6 +204,7 @@ export class VillageLife {
         if (this.scheduled.id === 'night' && this.age - this.scheduled.started > 55 && v.destination.startsWith('gather')) routeTo(v, 'bridgeWest');
         continue;
       }
+      if (v.outing) { this.updateOuting(v, dt); continue; }
       if (this.shouldShelter(v) && v.node === v.home) { v.hidden = true; continue; }
       const plan = this.plan(v);
       if (!this.shouldShelter(v) && plan.kind === 'meal' && v.node === plan.target) {
@@ -152,7 +226,7 @@ export class VillageLife {
         if (v.activity === 'music') {
           ['listenerA', 'listenerB'].forEach(node => {
             if (this.residents.some(other => !other.hidden && other.destination === node)) return;
-            const listener = this.residents.find(other => other !== v && !other.hidden && !other.route.length && other.activity === 'rest' && Math.hypot(v.x - other.x, v.y - other.y) < 240 && this.plan(other).kind !== 'meal');
+            const listener = this.residents.find(other => other !== v && !other.outing && !other.hidden && !other.route.length && other.activity === 'rest' && Math.hypot(v.x - other.x, v.y - other.y) < 240 && this.plan(other).kind !== 'meal');
             if (listener) this.send(listener, node);
           });
         }
@@ -161,6 +235,13 @@ export class VillageLife {
       if (v.wait > 0) continue;
       if (this.shouldShelter(v)) this.send(v, v.home);
       else this.send(v, this.destination(v));
+    }
+    if (this.happening?.kind === 'exchange' && !this.happening.transferred) {
+      const [a, b] = this.happening.residents.map(id => this.residents[id]);
+      if (a?.outing?.acting && b?.outing?.acting && Math.hypot(a.x - b.x, a.y - b.y) < 45 && Math.min(this.age - a.activityStarted, this.age - b.activityStarted) > 4) {
+        a.carrying = false; b.carrying = true; this.happening.transferred = true;
+        a.cue = 'heart'; b.cue = 'parcel'; a.cueUntil = b.cueUntil = this.age + 5;
+      }
     }
     if (this.age > this.nextSocial) { this.startConversation(); this.nextSocial = this.age + 2; }
     this.updatePet(this.dog, dt, ['westLane', 'east', 'bridgeEast', 'south', 'innStep']);
@@ -189,7 +270,7 @@ export class VillageLife {
         if (partner.hidden || partner.route.length) { v.socialUntil = 0; v.partner = null; v.activity = 'rest'; }
       }
     }
-    const available = this.residents.filter(v => !v.hidden && !v.route.length && v.socialUntil <= this.age && v.socialCooldown <= this.age && ['rest', 'chat'].includes(v.activity) && !this.shouldShelter(v));
+    const available = this.residents.filter(v => !v.outing && !v.hidden && !v.route.length && v.socialUntil <= this.age && v.socialCooldown <= this.age && ['rest', 'chat'].includes(v.activity) && !this.shouldShelter(v));
     for (const a of available) {
       const b = available.find(v => v !== a && Math.hypot(v.x - a.x, v.y - a.y) > 12 && Math.hypot(v.x - a.x, v.y - a.y) < 48);
       if (!b) continue;
@@ -224,9 +305,15 @@ export class VillageLife {
     if (pet.wait <= 0) { routeTo(pet, points[Math.floor(this.random() * points.length)]); pet.wait = 5 + this.random() * 15; }
   }
   triggerEvent() {
-    if (this.scheduled) return;
+    if (this.scheduled || this.happening) return;
     if (this.minute >= 720 && this.minute < 840) return;
-    if (this.period === 'night' || this.weather === 'stormy' || this.weather === 'rainy') return;
+    if (this.weather === 'stormy' || this.weather === 'rainy') return;
+    if (this.random() < .55 || this.period === 'night') {
+      const choices = RANDOM_SCENES.filter(e => e.id !== this.lastRandom && (this.period === 'night' ? e.night : !e.night) && sceneAllowed(e, { ...this.time, period: this.period }, this.weather));
+      const event = choices[Math.floor(this.random() * choices.length)];
+      if (event && this.startHappening({ ...event, source: 'random' })) { this.lastRandom = event.id; return; }
+    }
+    if (this.period === 'night') return;
     const choice = Math.floor(this.random() * 7);
     if (choice === 0) {
       routeTo(this.dog, this.dog.x < 700 ? 'east' : 'westLane'); this.dog.dashUntil = this.age + 13;
@@ -242,7 +329,7 @@ export class VillageLife {
     else this.triggerMoment('fishing');
   }
   triggerMoment(kind) {
-    if (this.scheduled || this.period === 'night' || ['rainy', 'stormy'].includes(this.weather)) return false;
+    if (this.scheduled || this.happening || this.period === 'night' || ['rainy', 'stormy'].includes(this.weather)) return false;
     if (kind === 'dog') {
       const friend = this.residents.find(v => !v.hidden && this.plan(v).kind !== 'meal' && !this.shouldShelter(v) && Math.hypot(v.x - this.dog.x, v.y - this.dog.y) < 400);
       if (!friend) return false;
@@ -263,11 +350,12 @@ export class VillageLife {
       ctx.save(); ctx.translate(v.x + (v.offsetX || 0), v.y + (v.offsetY || 0));
       ctx.fillStyle = this.weather === 'sunny' ? '#14201a60' : '#14201a38';
       ctx.beginPath(); ctx.ellipse(3, 1, v.kind ? 9 : 8, 3.5, -.25, 0, Math.PI * 2); ctx.fill();
-      const dancing = this.scheduled?.id === 'afternoon' && v.id < this.scheduled.count && !v.route.length;
+      const dancing = (this.scheduled?.id === 'afternoon' && v.id < this.scheduled.count || v.activity === 'dance') && !v.route.length;
       const bob = v.moving ? Math.sin(v.walk * .52) * .7 : dancing ? Math.sin(this.age * 5 + v.id) * 2 : Math.sin(this.age * 1.3 + (v.id || 0)) * .2;
       if (v.kind) drawAnimal(ctx, v, bob);
       else {
         if (v.job === 'enfant') ctx.scale(.84, .84);
+        if (v.seated && !v.moving) ctx.scale(1, .8);
         drawResident(ctx, v, bob, this.weather, this.period, light);
         drawActivity(ctx, v, this.age);
       }
@@ -278,8 +366,9 @@ export class VillageLife {
     for (const v of this.residents) {
       const phase = (this.age + v.id * 1.73) % 11, cued = v.cueUntil > this.age;
       if (v.hidden || (v.moving && !cued) || (!cued && (phase > 3.6 || v.route.length))) continue;
-      const icon = cued ? v.cue : this.scheduled?.id === 'afternoon' && v.id < this.scheduled.count ? 'music' : v.activity === 'rest' ? null : v.activity;
-      if (!['meal', 'chat', 'leaf', 'tools', 'parcel', 'music', 'fish', 'water', 'broom', 'grain', 'book', 'paw', 'heart'].includes(icon)) continue;
+      let icon = cued ? v.cue : this.scheduled?.id === 'afternoon' && v.id < this.scheduled.count ? 'music' : v.activity === 'rest' ? null : v.activity;
+      icon = ({ dance: 'music', trade: 'parcel', play: 'heart', gift: 'gift', candy: 'gift', flag: 'heart' })[icon] || icon;
+      if (!['meal', 'chat', 'leaf', 'tools', 'parcel', 'music', 'fish', 'water', 'broom', 'grain', 'book', 'paw', 'heart', 'flower', 'gift', 'star'].includes(icon)) continue;
       if (bubbles.length >= 5 || bubbles.some(p => Math.hypot(p.x - v.x, p.y - v.y) < 45)) continue;
       drawActivityBubble(ctx, icon, v.x, v.y - 48, cued ? 1 : Math.min(1, phase * 4, (3.6 - phase) * 4)); bubbles.push(v);
     }
@@ -303,6 +392,11 @@ function drawResident(ctx, v, bob, weather, period, darkness) {
   pixel(ctx, -3, -27, 7, 3, '#ffffff13');
   if (v.id % 4 === 0) { pixel(ctx, -7, -26, 14, 3, '#ab8b51'); pixel(ctx, -4, -30, 9, 5, '#c0a16c'); }
   if (v.carrying && v.activity !== 'meal') { pixel(ctx, 5, -12, 10, 9, '#9b7043'); pixel(ctx, 6, -11, 8, 2, '#cfaa69'); }
+  if (v.carrying && v.costume === 'gifts') { pixel(ctx, 5, -12, 10, 9, '#ae6460'); pixel(ctx, 9, -12, 2, 9, '#e2c88a'); pixel(ctx, 5, -9, 10, 2, '#e2c88a'); }
+  if (v.costume === 'halloween') {
+    pixel(ctx, -8, -28, 16, 3, '#54495e'); pixel(ctx, -5, -33, 10, 6, '#625368'); pixel(ctx, -2, -39, 5, 8, '#625368');
+    pixel(ctx, -5, -30, 10, 2, '#bd965f');
+  }
   if (v.activity === 'leaf' && !v.moving) { pixel(ctx, 10, -19, 2, 21, '#976a3b'); pixel(ctx, 7, -20, 8, 3, '#809392'); }
   if (darkness > .1) { ctx.fillStyle = `rgba(19,32,52,${darkness * .28})`; ctx.fillRect(-10, -30, 20, 32); }
   if (v.lantern || (period === 'night' && v.id % 8 === 0)) {

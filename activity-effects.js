@@ -36,6 +36,25 @@ export function drawActivity(ctx, v, age) {
     const side = v.facing === 'left' ? -1 : 1;
     pixel(ctx, side * 8 - 2, -12 - Math.max(0, beat) * 6, 4, 3, v.skin);
     pixel(ctx, side * 11 - 2, -12 - Math.max(0, beat) * 6, 3, 2, '#e6cc8b');
+  } else if (v.activity === 'flower') {
+    pixel(ctx, 9, -14, 2, 13, '#68834c'); pixel(ctx, 6, -8, 5, 2, '#81a763');
+    for (const [x, y, color] of [[7, -17, '#d9919a'], [12, -19, '#e3c274'], [14, -14, '#bc7381']]) {
+      pixel(ctx, x - 2, y, 6, 3, color); pixel(ctx, x, y - 2, 2, 7, color);
+    }
+  } else if (['gift', 'candy', 'trade', 'parcel'].includes(v.activity)) {
+    const gift = v.activity === 'gift', yy = -12 - Math.max(0, beat) * 2;
+    pixel(ctx, 7, yy, 11, 10, gift ? '#b46661' : '#b89658');
+    pixel(ctx, 12, yy, 2, 10, gift ? '#e3c888' : '#dec68e');
+    pixel(ctx, 7, yy + 3, 11, 2, '#e3c888');
+    pixel(ctx, 5, yy + 6, 4, 3, v.skin);
+  } else if (v.activity === 'play') {
+    pixel(ctx, -12, -15 - beat * 3, 5, 3, v.skin); pixel(ctx, 8, -15 + beat * 3, 5, 3, v.skin);
+  } else if (v.activity === 'flag') {
+    pixel(ctx, 10, -36, 2, 35, '#bd9a64');
+    const width = 15 + Math.round(beat * 2);
+    pixel(ctx, 12, -36, width, 12, '#bd6053'); pixel(ctx, 12, -32, width, 4, '#ede2c5');
+  } else if (v.activity === 'star') {
+    pixel(ctx, 7, -24, 3, 13, '#bd9a64'); pixel(ctx, 8, -26, 8, 4, '#8d9ea0');
   }
   ctx.restore();
 }

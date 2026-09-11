@@ -1,9 +1,11 @@
-import { WORLD, FOUNTAIN, SOLID_AREAS, CHIMNEYS, LANTERNS, WINDOWS } from './world.js?v=4.5';
-import { WeatherEffects, seededRandom } from './weather.js?v=4.5';
-import { VillageLife } from './entities.js?v=4.5';
-import { drawClockTime, drawBell } from './church-clock.js?v=4.5';
-import { VillageAppointments } from './events.js?v=4.5';
-import { VillageCamera } from './camera.js?v=4.5';
+import { WORLD, FOUNTAIN, SOLID_AREAS, CHIMNEYS, LANTERNS, WINDOWS } from './world.js?v=4.6';
+import { WeatherEffects, seededRandom } from './weather.js?v=4.6';
+import { VillageLife } from './entities.js?v=4.6';
+import { drawClockTime, drawBell } from './church-clock.js?v=4.6';
+import { VillageAppointments } from './events.js?v=4.6';
+import { VillageCamera } from './camera.js?v=4.6';
+import { VillageCalendar, calendarFor } from './calendar.js?v=4.6';
+import { drawCalendarGround, drawCalendarAir } from './calendar-effects.js?v=4.6';
 
 const DARKNESS = { morning: .03, day: 0, evening: .3, night: .85 };
 const RIVER_GLINTS = [[1242, 34], [1270, 69], [1300, 99], [1363, 262], [1414, 316], [1300, 358], [1300, 540], [1349, 576], [1390, 609], [1290, 650], [1377, 720], [1431, 800], [1368, 935], [1360, 988]];
@@ -23,6 +25,7 @@ export class VillageScene {
     this.current = createSurface(WORLD.width, WORLD.height);
     this.previous = createSurface(WORLD.width, WORLD.height);
     this.life = new VillageLife(random); this.appointments = new VillageAppointments(); this.effects = new WeatherEffects(WORLD.width, WORLD.height);
+    this.calendar = new VillageCalendar(); this.calendarState = null;
     this.fireflies = Array.from({ length: 10 }, () => ({ x: 1010 + random() * 180, y: 650 + random() * 210, phase: random() * 7 }));
     this.setEnvironment(this.environment, true);
     this.resize(canvas.width, canvas.height, 1);
@@ -38,11 +41,16 @@ export class VillageScene {
     this.ctx.imageSmoothingQuality = 'high';
   }
   setClock(time) {
+    if (this.time && time.dayKey !== this.time.dayKey) this.life.endHappening();
     this.time = time;
+    this.calendarState = calendarFor(time);
     this.life.setClock(time);
     if (this.life.scheduled && Date.now() > this.life.scheduled.wallUntil) this.life.endAppointment();
+    if (this.life.happening && (Date.now() > this.life.happening.wallUntil || this.life.happening.source === 'calendar' && !this.calendarState.candidates.some(e => e.id === this.life.happening.id))) this.life.endHappening();
     const event = this.appointments.read(time);
     if (event) this.life.startAppointment(event);
+    const tradition = this.calendar.read(time, this.environment.weather, Date.now() / 1000, Boolean(this.life.scheduled || this.life.happening));
+    if (tradition) this.life.startHappening(tradition);
   }
   setEnvironment(environment, initial = false, reducedMotion = false) {
     if (!initial && environment.period === this.environment.period && environment.weather === this.environment.weather) return;
@@ -117,11 +125,13 @@ export class VillageScene {
     } else ctx.drawImage(this.current, 0, 0);
     this.drawWater(ctx);
     this.drawLighting(ctx);
+    drawCalendarGround(ctx, this.calendarState, this.life, this.time, this.age, this.light);
     drawClockTime(ctx, this.time, this.light, this.life.scheduled, this.life.age);
     if (!reducedMotion) drawBell(ctx, this.image, this.life.scheduled, this.life.age, this.light);
     this.life.draw(ctx, this.light);
+    drawCalendarAir(ctx, this.calendarState, this.life, this.time, this.age, reducedMotion);
     this.drawSmoke(ctx);
-    if (this.environment.period === 'evening' || this.environment.period === 'night') this.drawFireflies(ctx);
+    if ((this.environment.period === 'evening' || this.environment.period === 'night') && (!this.calendarState || ['spring', 'summer'].includes(this.calendarState.season))) this.drawFireflies(ctx);
     this.effects.draw(ctx, reducedMotion);
     // Preserve a consistent context for clients that reuse the canvas.
     ctx.setTransform(1, 0, 0, 1, 0, 0);

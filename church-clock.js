@@ -1,4 +1,4 @@
-import { CHURCH } from './world.js?v=4.5';
+import { CHURCH } from './world.js?v=4.6';
 
 /** Live hands and a recessed time display on the building itself. */
 export function handAngles(hour, minute) {

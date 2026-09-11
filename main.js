@@ -1,9 +1,10 @@
-import { VillageClock } from './time.js?v=4.5';
-import { VillageWeather } from './weather.js?v=4.5';
-import { VillageScene } from './scene.js?v=4.5';
-import { VillageUI } from './ui.js?v=4.5';
-import { installBridge } from './bridge.js?v=4.5';
-import { APPOINTMENTS } from './events.js?v=4.5';
+import { VillageClock } from './time.js?v=4.6';
+import { VillageWeather } from './weather.js?v=4.6';
+import { VillageScene } from './scene.js?v=4.6';
+import { VillageUI } from './ui.js?v=4.6';
+import { installBridge } from './bridge.js?v=4.6';
+import { APPOINTMENTS } from './events.js?v=4.6';
+import { CALENDAR_PREVIEWS, RANDOM_SCENES, previewDate } from './calendar.js?v=4.6';
 
 const clock = new VillageClock(), weather = new VillageWeather();
 let scene, lastUI = 0, externalWeatherAt = null, previewEvent = null;
@@ -22,18 +23,39 @@ function refresh() {
   const conditions = weather.read(time);
   scene?.setEnvironment({ period: time.period, weather: conditions.kind }, false, reducedMotion);
   scene?.setClock(time);
-  ui.update(time, conditions, scene?.life, clock.forcedPeriod, weather.forced);
+  ui.update(time, conditions, scene?.life, clock.forcedPeriod, weather.forced, scene?.calendarState);
+}
+function stopScenes() { previewEvent = null; scene?.life.endHappening(); scene?.life.endAppointment(); scene?.calendar.reset(); }
+function previewTradition(event) {
+  if (!event || !scene) return;
+  const preset = previewDate(event, clock.read());
+  if (!preset) return;
+  stopScenes(); clock.forceDate(preset.date); clock.forceTime(preset.hour, preset.minute); weather.force(preset.weather); refresh();
+  scene.life.startHappening({ ...event, source: 'preview', duration: 210 }); refresh();
 }
 const ui = new VillageUI({
-  onPeriod: period => { previewEvent = null; scene?.life.endAppointment(); clock.force(period); refresh(); },
+  onPeriod: period => { stopScenes(); clock.force(period); refresh(); },
   onWeather: kind => { weather.force(kind); refresh(); },
-  onHour: hour => { previewEvent = null; scene?.life.endAppointment(); clock.forceTime(hour); refresh(); },
+  onHour: hour => { stopScenes(); clock.forceTime(hour); refresh(); },
+  onDate: date => { if (clock.forceDate(date || null)) { stopScenes(); refresh(); } },
+  onTime: value => {
+    if (!/^\d{2}:\d{2}$/.test(value)) return;
+    const [hour, minute] = value.split(':').map(Number);
+    if (clock.forceTime(hour, minute)) { stopScenes(); refresh(); }
+  },
+  onCalendar: key => previewTradition(CALENDAR_PREVIEWS.find(e => e.key === key)),
+  onSurprise: () => {
+    const options = RANDOM_SCENES.filter(e => e.id !== scene?.life.lastRandom);
+    const event = options[Math.floor(Math.random() * options.length)];
+    if (scene) scene.life.lastRandom = event.id;
+    previewTradition(event);
+  },
   onMoment: kind => {
     if (!scene) return;
-    previewEvent = null; scene.life.endAppointment(); clock.forceTime(10); weather.force('sunny'); refresh();
+    stopScenes(); clock.forceTime(10); weather.force('sunny'); refresh();
     scene.life.triggerMoment(kind); refresh();
   },
-  onAuto: () => { previewEvent = null; scene?.life.endAppointment(); clock.force(null); weather.force(null); refresh(); },
+  onAuto: () => { stopScenes(); clock.force(null); clock.forceDate(null); weather.force(null); refresh(); },
   onEvent: id => {
     const event = APPOINTMENTS.find(e => e.id === id);
     if (!scene || !event) return;
@@ -46,7 +68,7 @@ const removeBridge = installBridge(state => {
   if ('weather' in state) { weather.setExternal(state.weather); externalWeatherAt = Date.now(); }
   refresh();
 }, () => {
-  previewEvent = null; scene?.life.endAppointment(); clock.resetExternal(); clock.force(null); weather.setExternal(null); weather.force(null); externalWeatherAt = null; refresh();
+  stopScenes(); clock.resetExternal(); clock.force(null); clock.forceDate(null); weather.setExternal(null); weather.force(null); externalWeatherAt = null; refresh();
 });
 refresh();
 

@@ -1,4 +1,4 @@
-import { FOUNTAIN, SOLID_AREAS } from './world.js?v=4.5';
+import { FOUNTAIN, SOLID_AREAS } from './world.js?v=4.6';
 
 export const WEATHER_LABELS = Object.freeze({ sunny: 'Ensoleillé', cloudy: 'Nuageux', rainy: 'Pluie', stormy: 'Orage', snowy: 'Neige', foggy: 'Brouillard' });
 const HA_CONDITIONS = Object.freeze({

@@ -1,4 +1,4 @@
-import { WORLD, CHURCH } from './world.js?v=4.5';
+import { WORLD, CHURCH } from './world.js?v=4.6';
 
 /** One reversible focus gesture, with the same coordinates for drawing and touch. */
 export class VillageCamera {

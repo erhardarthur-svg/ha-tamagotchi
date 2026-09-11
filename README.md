@@ -1,4 +1,33 @@
-# HA Village — V4.5
+# HA Village — V4.6
+
+## Un calendrier vivant
+
+Le village suit désormais la date civile et le fuseau de son horloge : **7 traditions quotidiennes, 8 rendez-vous hebdomadaires, 11 ambiances annuelles et 10 nouvelles surprises**, en plus des repas, métiers, animaux et rendez-vous du clocher déjà présents. Ces traditions sont celles de ce village fictif ; il ne s’agit pas d’un agenda extérieur ni du calendrier officiel des fêtes de Bayonne.
+
+| Rythme | Animations |
+| --- | --- |
+| Chaque jour | Livraisons 6 h 30–8 h ; jardinage 8 h–9 h 30 ; entretien 10 h–11 h 30 ; histoire 14 h 30–15 h 30 ; repas à la taverne 18 h–19 h 30 ; lanternes 20 h 30–21 h 30 ; étoiles 22 h–23 h 30 |
+| Lundi | Atelier ouvert, 10 h–11 h 50 |
+| Mardi | Rendez-vous des pêcheurs, 15 h–17 h |
+| Mercredi | Jeux et ballon sur le parvis, 14 h–16 h |
+| Jeudi | Préparation de bouquets, 10 h–11 h 50 |
+| Vendredi | Musique et danse, 18 h–20 h 30 |
+| Samedi et dimanche | Deux étals de marché, 9 h–11 h 55 |
+| Dimanche | Pique-nique, 14 h–17 h |
+
+Au fil de l’année : vœux du **1er janvier**, bouquets du **14 février**, fête du printemps le **21 mars**, fleurs du **1er mai**, musique le **21 juin**, parade le **14 juillet**, récoltes le **22 septembre**, Halloween le **31 octobre**, préparatifs du **15 au 23 décembre**, Noël du **24 au 26 décembre**, réveillon le **31 décembre**. Les décorations restent présentes pendant les dates concernées ; les groupes se réunissent dans les plages horaires définies dans `calendar.js`.
+
+Fanions, étals, bouquets, citrouilles éclairées, sapin et cadeaux sont rendus dans la scène. Les personnages portent des accessoires, jouent au ballon ou avec la neige, lisent aux enfants, mangent assis et livrent leurs paquets. Un échange de colis attend réellement l’arrivée des deux voisins avant le passage de main. À Halloween, de petits chapeaux et quelques chauves-souris complètent l’ambiance. Des feux d’artifice discrets, sans son ni flash plein écran, apparaissent le 31 décembre à partir de 23 h 58, les dix premières minutes du 1er janvier et le 14 juillet entre 22 h et 23 h, si la météo le permet.
+
+Les saisons ajoutent pétales, papillons, feuilles d’automne et lucioles aux beaux jours. La saison utilise ici des groupes de mois fixes (décembre–février, mars–mai, juin–août, septembre–novembre), sans calcul d’équinoxe. Les boules de neige nécessitent la météo Neige ; les étoiles nécessitent un ciel dégagé.
+
+Les surprises comprennent un échange de colis, de l’entraide, un ballon, un bouquet offert, un envol d’oiseaux, un goûter, une histoire, des boules de neige, une étoile filante et une ronde de lanternes. Le tirage évite deux nouvelles surprises identiques à la suite. Les animations aléatoires précédentes (chien, chat, poules, pêche, musique et conversations) restent disponibles.
+
+Une seule scène collective joue à la fois. Les départs sont échelonnés, les activités commencent à destination, les points occupés font attendre les suivants, puis chacun reprend sa routine. Déjeuner et cloches restent prioritaires ; pluie et orage interrompent les sorties. Les trois veilleurs suffisent pour les petites surprises nocturnes ; certaines fêtes peuvent exceptionnellement réveiller davantage d’habitants.
+
+Une activité quotidienne ou hebdomadaire démarre si la page est ouverte pendant sa plage horaire, au plus une fois par journée et par session. Les fêtes peuvent revenir après 25 minutes ; deux déclenchements du calendrier sont espacés d’au moins sept minutes. Une scène dure généralement moins de quatre minutes. Fermer la page n’exécute rien en arrière-plan ; la reprise ne rejoue pas en rafale ce qui a été manqué. Un changement de date ou la fin de la plage horaire libère les participants. Les échéances réelles restent actives en mode de mouvements réduits.
+
+Dans **`?debug=1` → Debug → Voyager dans le calendrier**, choisir librement une date et une heure, ou sélectionner l’une des 36 scènes dans la liste puis **Voir cette scène**. **Surprise** choisit un aperçu aléatoire. L’aperçu règle la date, l’heure et la météo pour rendre la scène visible, sans téléporter les habitants. Le programme de la journée est consultable dans le panneau repliable. **Auto** retire tous les forçages et retrouve l’horloge locale ou Home Assistant. Aucune commande supplémentaire dans la vue normale.
 
 ## Le clocher au cœur du village
 
@@ -118,6 +147,9 @@ Les conditions moins courantes sont regroupées dans les six ambiances demandée
 | `camera.js` | Rapprochement du clocher, cadrage et coordonnées tactiles |
 | `church-clock.js` | Aiguilles, plaque HH:MM, éclairage et cloche animée |
 | `events.js` | Rendez-vous quotidiens, détection sur l’heure civile |
+| `calendar.js` | Dates, traditions, priorités, temporisation et aperçus |
+| `happenings.js` | Parcours et étapes des scènes collectives |
+| `calendar-effects.js` | Décors de fêtes, saisons, ballon, oiseaux et feux d’artifice |
 | `navigation.js` | Chemins, freinage, virages, suivi et positions sûres |
 | `routines.js` | Tournées, postes d’activité et pictogrammes |
 | `activity-effects.js` | Accessoires et gestes des activités |
@@ -152,6 +184,6 @@ Avec Node.js 18 ou supérieur déjà installé :
 npm test
 ```
 
-Les tests couvrent les limites horaires, le fuseau et le passage de minuit, les forçages indépendants, les trajets et obstacles, les retours nocturnes, les transitions rapides, les particules et éclairs bornés, le filtrage des messages et les ressources locales. Aucun paquet npm n’est nécessaire.
+Les tests couvrent les limites horaires, le fuseau et le passage de minuit, les dates bissextiles, les traditions selon le jour, les priorités et temporisations, l’arrivée effective aux activités, l’échange de colis, les retours nocturnes, les interruptions sans téléportation, les trajets et obstacles, les particules bornées, le filtrage des messages et les ressources locales. Aucun paquet npm n’est nécessaire.
 
 Références officielles : [carte Page web](https://www.home-assistant.io/dashboards/iframe/), [conditions météo](https://www.home-assistant.io/integrations/weather/).

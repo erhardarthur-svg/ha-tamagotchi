@@ -10,6 +10,7 @@ export const CHURCH = Object.freeze({
   hitArea: { x: 683, y: 247, w: 161, h: 202 },
 });
 export const SQUARE = Object.freeze({ x: 710, y: 544 });
+export const MARKET_STALLS = Object.freeze([{ x: 507, y: 441, color: '#a64e4d' }, { x: 990, y: 436, color: '#547d68' }]);
 export const CHIMNEYS = [[462, 103], [394, 548], [944, 613]];
 export const LANTERNS = [
   { x: 488, y: 364, ground: 400 }, { x: 928, y: 509, ground: 539 },
@@ -59,6 +60,13 @@ export const NODES = Object.freeze({
   wellA: [849, 301], wellB: [909, 389],
   chatA: [575, 573], chatB: [601, 573],
   meetingA: [652, 535], meetingB: [679, 535], meetingC: [706, 535],
+  marketWestBuyer: [509, 462], marketWestSeller: [546, 442],
+  marketEastBuyer: [991, 458], marketEastSeller: [1030, 442],
+  picnicA: [493, 506], picnicB: [520, 514], picnicC: [539, 498],
+  exchangeA: [646, 557], exchangeB: [675, 557],
+  playA: [637, 518], playB: [787, 563], stageMusic: [745, 512],
+  gardenGuestA: [505, 803], gardenGuestB: [507, 755], feedingGuest: [325, 905],
+  repairGuestA: [923, 786], repairGuestB: [947, 797], fishGuest: [1171, 580],
   ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => {
     const row = Math.floor(i / 6), column = i % 6;
     return [`gather${i}`, [618 + column * 35 + (row % 2) * 7, 519 + row * 23]];
@@ -91,6 +99,13 @@ const EDGES = [
   ['northeast', 'wellA'], ['fountainSouth', 'wellB'],
   ['southwest', 'chatA'], ['chatA', 'chatB'], ['chatB', 'south'],
   ['churchStep', 'meetingA'], ['meetingA', 'meetingB'], ['meetingB', 'meetingC'],
+  ['west', 'marketWestBuyer'], ['west', 'marketWestSeller'],
+  ['eastLane', 'marketEastBuyer'], ['eastLane', 'marketEastSeller'],
+  ['west', 'picnicA'], ['picnicA', 'picnicB'], ['picnicB', 'picnicC'], ['picnicC', 'southwest'],
+  ['south', 'exchangeA'], ['exchangeA', 'exchangeB'],
+  ['churchStep', 'playA'], ['southeast', 'playB'], ['churchStep', 'stageMusic'],
+  ['garden', 'gardenGuestA'], ['gardenGuestA', 'gardenGuestB'], ['feedingLane', 'feedingGuest'],
+  ['workshopStep', 'repairGuestA'], ['repairGuestA', 'repairGuestB'], ['fishing', 'fishGuest'],
 ];
 for (let i = 0; i < 8; i++) {
   EDGES.push([`aisle${i}`, `seat${i}`]);
